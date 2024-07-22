@@ -31,8 +31,8 @@ fn enter_credits(mut commands: Commands) {
         .insert(StateScoped(Screen::Credits))
         .with_children(|children| {
             children.header("Made by");
-            children.label("Alice - Foo");
-            children.label("Bob - Bar");
+            children.label("Gilles Henaux - @Henauxg");
+            children.label("Swann Henaux - @H8sh");
 
             children.header("Assets");
             children.label("Bevy logo - All rights reserved by the Bevy Foundation. Permission granted for splash screen use when unmodified.");
@@ -42,11 +42,11 @@ fn enter_credits(mut commands: Commands) {
             children.button("Back").insert(CreditsAction::Back);
         });
 
-    commands.trigger(PlaySoundtrack::Key(SoundtrackKey::Credits));
+    // commands.trigger(PlaySoundtrack::Key(SoundtrackKey::Credits));
 }
 
 fn exit_credits(mut commands: Commands) {
-    commands.trigger(PlaySoundtrack::Disable);
+    // commands.trigger(PlaySoundtrack::Disable);
 }
 
 fn handle_credits_action(
