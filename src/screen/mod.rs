@@ -3,7 +3,6 @@
 mod credits;
 mod loading;
 mod playing;
-mod splash;
 mod title;
 
 use bevy::prelude::*;
@@ -24,7 +23,7 @@ pub(super) fn plugin(app: &mut App) {
 /// The game's main screen states.
 #[derive(States, Debug, Hash, PartialEq, Eq, Clone, Default)]
 pub enum Screen {
-    Splash,
+    _Splash,
     #[default]
     Loading,
     Title,
