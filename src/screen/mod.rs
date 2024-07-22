@@ -13,7 +13,7 @@ pub(super) fn plugin(app: &mut App) {
     app.enable_state_scoped_entities::<Screen>();
 
     app.add_plugins((
-        splash::plugin,
+        // splash::plugin,
         loading::plugin,
         title::plugin,
         credits::plugin,
@@ -24,8 +24,8 @@ pub(super) fn plugin(app: &mut App) {
 /// The game's main screen states.
 #[derive(States, Debug, Hash, PartialEq, Eq, Clone, Default)]
 pub enum Screen {
-    #[default]
     Splash,
+    #[default]
     Loading,
     Title,
     Credits,
