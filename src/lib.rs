@@ -7,8 +7,15 @@ mod ui;
 use bevy::{
     asset::AssetMetaCheck,
     audio::{AudioPlugin, Volume},
+    input::common_conditions::input_just_pressed,
     prelude::*,
 };
+use bevy_ghx_utils::camera::{
+    display_pan_orbit_camera_state, update_pan_orbit_camera, PanOrbitCameraBundle,
+    PanOrbitSettings, PanOrbitState,
+};
+use bevy_mod_raycast::cursor::CursorRayPlugin;
+use bevy_rapier3d::plugin::{NoUserData, RapierPhysicsPlugin};
 
 pub struct AppPlugin;
 
@@ -19,9 +26,6 @@ impl Plugin for AppPlugin {
             Update,
             (AppSet::TickTimers, AppSet::RecordInput, AppSet::Update).chain(),
         );
-
-        // Spawn the main camera.
-        app.add_systems(Startup, spawn_camera);
 
         // Add Bevy plugins.
         app.add_plugins(
@@ -52,7 +56,20 @@ impl Plugin for AppPlugin {
                 }),
         );
 
+        // Spawn the main camera.
+        app.add_systems(Startup, spawn_camera).add_systems(
+            Update,
+            (
+                update_pan_orbit_camera,
+                display_pan_orbit_camera_state.run_if(input_just_pressed(KeyCode::KeyC)),
+            ),
+        );
+
         // Add other plugins.
+        app.add_plugins((
+            CursorRayPlugin,
+            RapierPhysicsPlugin::<NoUserData>::default(),
+        ));
         app.add_plugins((game::plugin, screen::plugin, ui::plugin));
 
         // Enable dev tools for dev builds.
@@ -75,9 +92,10 @@ enum AppSet {
 }
 
 fn spawn_camera(mut commands: Commands) {
+    // Camera
+    let camera_position = Vec3::new(0., 1.5, -5.);
+    let look_target = Vec3::ZERO;
     commands.spawn((
-        Name::new("Camera"),
-        Camera2dBundle::default(),
         // Render all UI to this camera.
         // Not strictly necessary since we only use one camera,
         // but if we don't use this component, our UI will disappear as soon
@@ -85,5 +103,24 @@ fn spawn_camera(mut commands: Commands) {
         // [ui node outlines](https://bevyengine.org/news/bevy-0-14/#ui-node-outline-gizmos)
         // for debugging. So it's good to have this here for future-proofing.
         IsDefaultUiCamera,
+        PanOrbitCameraBundle {
+            camera: Camera3dBundle {
+                transform: Transform::from_translation(camera_position)
+                    .looking_at(look_target, Vec3::Y),
+                ..default()
+            },
+            state: PanOrbitState {
+                center: Vec3::new(-0.2976082, 0.45186156, 0.6121746),
+                radius: 5.379136,
+                upside_down: false,
+                pitch: -0.28798094,
+                yaw: -2.6529098,
+                ..Default::default()
+            },
+            settings: PanOrbitSettings {
+                auto_orbit: false,
+                ..Default::default()
+            },
+        },
     ));
 }

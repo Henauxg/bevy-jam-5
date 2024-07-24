@@ -5,13 +5,27 @@ edition = "2021"
 license = "MIT OR Apache-2.0 OR CC0-1.0"
 
 [dependencies]
-bevy = { version = "0.14", features = ["wayland"] }
+bevy_ghx_destruction = { git = "https://github.com/Henauxg/bevy_ghx_destruction.git" }
+bevy_ghx_utils = { git = "https://github.com/Henauxg/bevy_ghx_utils.git" }
+bevy = { version = "0.14", features = [
+    "wayland",
+
+    "bevy_core_pipeline", # Common rendering abstractions
+    "bevy_gltf",          # glTF support
+    "bevy_render",        # Rendering framework core
+    "bevy_pbr",           # 3D (physically-based) rendering
+    "bevy_scene",         # Provides scene functionality
+    "bevy_color",         # Provides shared color types and operations
+] }
 # Disable low-severity logs at compile time for performance.
 log = { version = "0.4", features = [
     "max_level_debug",
     "release_max_level_warn",
 ] }
 rand = "0.8"
+bevy_mod_raycast = "0.18.0"
+bevy_rapier3d = "0.27.0"
+
 
 [features]
 default = [

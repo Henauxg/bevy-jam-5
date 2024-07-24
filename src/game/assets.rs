@@ -13,6 +13,12 @@ pub(super) fn plugin(app: &mut App) {
 
     app.register_type::<HandleMap<SoundtrackKey>>();
     app.init_resource::<HandleMap<SoundtrackKey>>();
+
+    app.register_type::<HandleMap<SceneKey>>();
+    app.init_resource::<HandleMap<SceneKey>>();
+
+    app.register_type::<HandleMap<GltfKey>>();
+    app.init_resource::<HandleMap<GltfKey>>();
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
@@ -79,6 +85,7 @@ impl FromWorld for HandleMap<SfxKey> {
 pub enum SoundtrackKey {
     Credits,
     Gameplay,
+    Excavation,
 }
 
 impl AssetKey for SoundtrackKey {
@@ -97,6 +104,65 @@ impl FromWorld for HandleMap<SoundtrackKey> {
                 SoundtrackKey::Gameplay,
                 asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
             ),
+            (
+                SoundtrackKey::Excavation,
+                asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
+            ),
+        ]
+        .into()
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum SceneKey {
+    Rock,
+    Gladiator,
+    Dummy,
+}
+
+impl AssetKey for SceneKey {
+    type Asset = Scene;
+}
+
+impl FromWorld for HandleMap<SceneKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (SceneKey::Rock, asset_server.load("models/rock.glb#Scene0")),
+            (
+                SceneKey::Gladiator,
+                asset_server.load("models/gladiator.glb#Scene0"),
+            ),
+            (
+                SceneKey::Dummy,
+                asset_server.load("models/dummy.glb#Scene0"),
+            ),
+        ]
+        .into()
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum GltfKey {
+    Rock,
+    Gladiator,
+    Dummy,
+}
+
+impl AssetKey for GltfKey {
+    type Asset = Gltf;
+}
+
+impl FromWorld for HandleMap<GltfKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (GltfKey::Rock, asset_server.load("models/rock.glb")),
+            (
+                GltfKey::Gladiator,
+                asset_server.load("models/gladiator.glb"),
+            ),
+            (GltfKey::Dummy, asset_server.load("models/dummy.glb")),
         ]
         .into()
     }
