@@ -6,7 +6,7 @@ use bevy_rapier3d::prelude::{
 use crate::{
     game::{
         assets::{GltfKey, HandleMap},
-        slicing::Sliceable,
+        dummies::slicing::Sliceable,
     },
     screen::Screen,
 };
@@ -18,18 +18,13 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Event, Debug)]
 pub struct SpawnDummy {
-    pub count: usize,
+    pub pos: Vec3,
+    pub slot_index: usize,
 }
-
-pub const DUMMY_POSITIONS: [Vec3; 3] = [
-    Vec3::new(0., 0., 1.5),
-    Vec3::new(-1.5, 0., 1.25),
-    Vec3::new(-3., 0., 1.),
-];
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
-pub struct Dummy;
+pub struct Dummy(pub usize);
 
 #[derive(Resource)]
 pub struct DummyCachedData {
@@ -54,28 +49,28 @@ fn spawn_dummy(
     };
     let mesh_handle = &gltf_mesh.primitives[0].mesh;
 
-    // TODO Check slots
     let spawn_info = trigger.event();
-    for i in 0..spawn_info.count {
-        commands.spawn((
-            Name::new("Dummy"),
-            StateScoped(Screen::Playing),
-            PbrBundle {
-                // scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
-                mesh: mesh_handle.clone(),
-                // TODO Material
-                material: materials.add(Color::srgb_u8(50, 50, 50)),
-                transform: Transform::from_translation(DUMMY_POSITIONS[i])
-                    .looking_at(Vec3::ZERO, Vec3::Y),
-                ..default()
-            },
-            Sliceable,
-            RigidBody::Fixed,
-            dummy_cached_data.collider.clone(),
-            ActiveCollisionTypes::default(),
-            Friction::coefficient(0.7),
-            Restitution::coefficient(0.05),
-            ColliderMassProperties::Density(2.0),
-        ));
-    }
+    commands.spawn((
+        Name::new("Dummy"),
+        StateScoped(Screen::Playing),
+        PbrBundle {
+            // scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
+            mesh: mesh_handle.clone(),
+            // TODO Material
+            material: materials.add(Color::srgb_u8(50, 50, 50)),
+            transform: Transform::from_translation(spawn_info.pos).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        },
+        // Physic
+        RigidBody::Fixed,
+        dummy_cached_data.collider.clone(),
+        ActiveCollisionTypes::default(),
+        Friction::coefficient(0.7),
+        Restitution::coefficient(0.05),
+        ColliderMassProperties::Density(2.0),
+        // Logic
+        Sliceable,
+        Dummy(spawn_info.slot_index),
+    ));
+    // }
 }

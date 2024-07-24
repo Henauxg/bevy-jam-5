@@ -3,19 +3,22 @@
 use bevy::prelude::*;
 
 mod animation;
+pub mod arena;
 pub mod assets;
 pub mod audio;
+pub mod dummies;
 mod movement;
-pub mod slicing;
 pub mod spawn;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
-        animation::plugin,
+        // animation::plugin,
+
+        // movement::plugin,
         audio::plugin,
         assets::plugin,
-        movement::plugin,
         spawn::plugin,
-        slicing::plugin,
+        dummies::plugin,
+        arena::plugin,
     ));
 }

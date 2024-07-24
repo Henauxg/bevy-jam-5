@@ -8,19 +8,19 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{ActiveCollisionTypes, Collider, Friction, Restitution};
 
-use crate::screen::Screen;
+use crate::{game::dummies::spawning::SpawnDummySlots, screen::Screen};
 
-use super::{dummy::SpawnDummy, player::SpawnPlayer};
+use super::player::SpawnPlayer;
 
 pub(super) fn plugin(app: &mut App) {
-    app.observe(spawn_level);
+    app.observe(spawn_arena);
 }
 
 #[derive(Event, Debug)]
-pub struct SpawnLevel;
+pub struct SpawnArena;
 
-fn spawn_level(
-    _trigger: Trigger<SpawnLevel>,
+fn spawn_arena(
+    _trigger: Trigger<SpawnArena>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -33,7 +33,9 @@ fn spawn_level(
         looking_at: Vec3::new(0., 0., -3.),
     });
 
-    commands.trigger(SpawnDummy { count: 3 });
+    // commands.trigger(SpawnDummy { count: 3 });
+
+    commands.trigger(SpawnDummySlots);
 
     // Scene lights
     commands.insert_resource(AmbientLight {

@@ -4,15 +4,15 @@
 
 use bevy::prelude::*;
 
+pub mod arena;
 pub mod dummy;
-pub mod level;
 pub mod mine_scene;
 pub mod player;
 pub mod rock;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
-        level::plugin,
+        arena::plugin,
         player::plugin,
         mine_scene::plugin,
         rock::plugin,

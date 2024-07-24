@@ -59,10 +59,10 @@ impl SlicedFragment {
 }
 
 #[derive(Event, Debug, Clone, Reflect)]
-struct SliceEvent {
-    begin: Vec3,
-    end: Vec3,
-    entity: Entity,
+pub struct SliceEvent {
+    pub begin: Vec3,
+    pub end: Vec3,
+    pub entity: Entity,
 }
 
 #[derive(Resource, Debug, Clone, Default, Reflect)]
