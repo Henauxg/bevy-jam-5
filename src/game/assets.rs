@@ -1,8 +1,12 @@
 use bevy::{
+    gltf::GltfMesh,
     prelude::*,
     render::texture::{ImageLoaderSettings, ImageSampler},
     utils::HashMap,
 };
+use bevy_rapier3d::prelude::{Collider, ComputedColliderShape};
+
+use super::spawn::dummy::DummyCachedData;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<HandleMap<ImageKey>>();
@@ -190,4 +194,56 @@ impl<K: AssetKey> HandleMap<K> {
         self.values()
             .all(|x| asset_server.is_loaded_with_dependencies(x))
     }
+}
+
+#[derive(Resource, Default)]
+/// Flags tracking which assets still need to be processed
+pub struct AssetsProcessing {
+    pub dummy: bool,
+}
+
+pub fn process_dummy_asset(
+    mut commands: Commands,
+    gltf_handles: Res<HandleMap<GltfKey>>,
+    assets_gltf: Res<Assets<Gltf>>,
+    assets_gltfmesh: Res<Assets<GltfMesh>>,
+    meshes: ResMut<Assets<Mesh>>,
+    mut assets_processing: ResMut<AssetsProcessing>,
+) {
+    let gltf_handle = &gltf_handles[&GltfKey::Dummy];
+    let Some(gltf) = assets_gltf.get(gltf_handle) else {
+        return;
+    };
+    let Some(gltf_mesh) = assets_gltfmesh.get(&gltf.meshes[0]) else {
+        return;
+    };
+    let mesh_handle = &gltf_mesh.primitives[0].mesh;
+    let Some(mesh) = meshes.get(mesh_handle) else {
+        return;
+    };
+
+    let Some(collider) = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::ConvexHull) else {
+        return;
+    };
+    commands.insert_resource(DummyCachedData { collider });
+    assets_processing.dummy = true;
+}
+
+pub fn all_assets_loaded(
+    asset_server: Res<AssetServer>,
+    image_handles: Res<HandleMap<ImageKey>>,
+    sfx_handles: Res<HandleMap<SfxKey>>,
+    soundtrack_handles: Res<HandleMap<SoundtrackKey>>,
+    gltf_handles: Res<HandleMap<GltfKey>>,
+    scene_handles: Res<HandleMap<SceneKey>>,
+) -> bool {
+    image_handles.all_loaded(&asset_server)
+        && sfx_handles.all_loaded(&asset_server)
+        && soundtrack_handles.all_loaded(&asset_server)
+        && gltf_handles.all_loaded(&asset_server)
+        && scene_handles.all_loaded(&asset_server)
+}
+
+pub fn all_assets_processed(assets_processing: Res<AssetsProcessing>) -> bool {
+    assets_processing.dummy
 }

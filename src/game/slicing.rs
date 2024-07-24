@@ -1,35 +1,43 @@
+use std::time::Duration;
+
 use bevy::{
     app::{App, Update},
     asset::{Assets, Handle},
-    color::{palettes::css::GREEN, Color},
+    color::Color,
+    core::Name,
     input::ButtonInput,
     math::{Vec3, Vec3A},
-    pbr::{
-        wireframe::{Wireframe, WireframeColor},
-        PbrBundle, StandardMaterial,
-    },
+    pbr::{PbrBundle, StandardMaterial},
     prelude::{
-        Camera, Commands, Component, Entity, Event, Gizmos, GlobalTransform, IntoSystemConfigs,
-        Mesh, MouseButton, Query, Res, ResMut, Resource, Transform, Trigger, With, Without,
+        Camera, Commands, Component, DespawnRecursiveExt, Entity, Event, Gizmos, GlobalTransform,
+        IntoSystemConfigs, Mesh, MouseButton, Query, Res, ResMut, Resource, StateScoped, Transform,
+        Trigger, With, Without,
     },
     reflect::Reflect,
+    time::{Time, Timer, TimerMode},
     utils::default,
 };
 use bevy_ghx_destruction::{slicing::slicing::slice_bevy_mesh, types::Plane};
 use bevy_mod_raycast::{cursor::CursorRay, prelude::Raycast};
 use bevy_rapier3d::prelude::{
-    ActiveCollisionTypes, Collider, ColliderMassProperties, ComputedColliderShape, Friction,
-    Restitution, RigidBody,
+    ActiveCollisionTypes, Collider, ColliderMassProperties, ComputedColliderShape, ExternalImpulse,
+    Friction, Restitution, RigidBody,
 };
 
-use crate::AppSet;
+use crate::{screen::Screen, AppSet};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();
     app.register_type::<SliceEvent>();
     app.register_type::<SlicerState>();
 
-    app.add_systems(Update, detect_slices.in_set(AppSet::RecordInput));
+    app.add_systems(
+        Update,
+        (
+            detect_slices.in_set(AppSet::RecordInput),
+            despawn_fragments.in_set(AppSet::Update),
+        ),
+    );
     app.init_resource::<SlicerState>();
 
     app.observe(slice);
@@ -37,6 +45,18 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component, Debug, Clone, PartialEq, Eq, Default, Reflect)]
 pub struct Sliceable;
+
+#[derive(Component, Debug, Clone, PartialEq, Eq, Default, Reflect)]
+pub struct SlicedFragment {
+    despawn_timer: Timer,
+}
+impl SlicedFragment {
+    pub fn new() -> Self {
+        Self {
+            despawn_timer: Timer::new(Duration::from_secs(5), TimerMode::Once),
+        }
+    }
+}
 
 #[derive(Event, Debug, Clone, Reflect)]
 struct SliceEvent {
@@ -55,10 +75,9 @@ fn detect_slices(
     mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
     cursor_ray: Res<CursorRay>,
+    mut slicer_state: ResMut<SlicerState>,
     mut raycast: Raycast,
     mut gizmos: Gizmos,
-    // mut spawn_sliceable_events: EventWriter<SliceEvent>,
-    mut slicer_state: ResMut<SlicerState>,
 ) {
     let Some(cursor_ray) = cursor_ray.0 else {
         return;
@@ -84,26 +103,11 @@ fn detect_slices(
             }
         }
     }
-
-    // TODO viewport_to_world ?
-    // let ray = ca
-
-    // let ray_pos = Vec3::new(1.0, 2.0, 3.0);
-    // let ray_dir = Vec3::new(0.0, 1.0, 0.0);
-    // let max_toi = 4.0;
-    // let solid = true;
-    // let filter = QueryFilter::default();
-
-    // if let Some((entity, toi)) = rapier_context.cast_ray(ray_pos, ray_dir, max_toi, solid, filter) {
-    //     // The first collider hit has the entity `entity` and it hit after
-    //     // the ray travelled a distance equal to `ray_dir * toi`.
-    //     let hit_point = ray_pos + ray_dir * toi;
-    //     println!("Entity {:?} hit at point {}", entity, hit_point);
-    // }
 }
 
 fn slice(
     trigger: Trigger<SliceEvent>,
+    mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
     cameras: Query<&mut Transform, With<Camera>>,
     sliceables: Query<
@@ -111,8 +115,6 @@ fn slice(
         (With<Sliceable>, Without<Camera>),
     >,
     mut meshes_assets: ResMut<Assets<Mesh>>,
-    mut commands: Commands,
-    // mut spawn_sliceable_events: EventReader<SliceEvent>,
 ) {
     let camera_tranform = cameras.single();
     let event = trigger.event();
@@ -130,62 +132,95 @@ fn slice(
 
         let plane = Plane::new(local_begin, (local_qr.cross(local_qs).normalize()).into());
 
-        let meshes = slice_bevy_mesh(plane, &mesh);
+        // let optional_mesh_fragments =;
+        if let Some(mesh_fragments) = slice_bevy_mesh(plane, mesh) {
+            commands.entity(event.entity).despawn();
 
-        commands.entity(event.entity).despawn();
+            // commands.spawn((
+            //     PbrBundle {
+            //         mesh: meshes_assets.add(Plane3d::new(qr.cross(qs))),
+            //         transform: Transform::from_translation(event.begin),
+            //         material: materials.add(Color::rgb_u8(124, 144, 255)),
+            //         ..default()
+            //     },
+            //     SliceableObject,
+            // ));
 
-        // commands.spawn((
-        //     PbrBundle {
-        //         mesh: meshes_assets.add(Plane3d::new(qr.cross(qs))),
-        //         transform: Transform::from_translation(event.begin),
-        //         material: materials.add(Color::rgb_u8(124, 144, 255)),
-        //         ..default()
-        //     },
-        //     SliceableObject,
-        // ));
-
-        let slice_center = Vec3A::from(transform.translation);
-        spawn_fragment(
-            meshes,
-            &mut materials,
-            &mut meshes_assets,
-            &mut commands,
-            slice_center,
-        );
+            spawn_fragments(
+                &mesh_fragments,
+                &mut materials,
+                &mut meshes_assets,
+                &mut commands,
+                transform.translation,
+                local_begin,
+            );
+        }
     }
 }
 
-fn spawn_fragment(
-    meshes: Vec<Mesh>,
+pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 2.;
+
+fn spawn_fragments(
+    mesh_fragments: &[Mesh],
     materials: &mut ResMut<Assets<StandardMaterial>>,
     meshes_assets: &mut ResMut<Assets<Mesh>>,
     commands: &mut Commands,
-    pos: Vec3A,
+    sliced_mesh_pos: Vec3,
+    slice_plane_point: Vec3A,
 ) {
-    for mesh in meshes {
-        let mesh_handle = meshes_assets.add(mesh.clone());
+    for mesh in mesh_fragments {
         let Some(collider) = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull)
         else {
             continue;
         };
-        commands.spawn((
-            PbrBundle {
-                mesh: mesh_handle.clone(),
-                transform: Transform::from_xyz(pos.x, pos.y, pos.z),
-                material: materials.add(Color::srgb_u8(124, 144, 255)),
-                ..default()
-            },
-            Sliceable,
-            Wireframe,
-            WireframeColor {
-                color: Color::Srgba(GREEN),
-            },
-            RigidBody::Dynamic,
-            collider,
-            ActiveCollisionTypes::default(),
-            Friction::coefficient(0.7),
-            Restitution::coefficient(0.05),
-            ColliderMassProperties::Density(2.0),
-        ));
+        let Some(aabb) = mesh.compute_aabb() else {
+            continue;
+        };
+        let mesh_handle = meshes_assets.add(mesh.clone());
+        let frag_entity = commands
+            .spawn((
+                Name::new("Dummy fragment"),
+                StateScoped(Screen::Playing),
+                PbrBundle {
+                    mesh: mesh_handle.clone(),
+                    transform: Transform::from_translation(sliced_mesh_pos),
+                    material: materials.add(Color::srgb_u8(124, 144, 255)),
+                    ..default()
+                },
+                // Sliceable,
+                // Wireframe,
+                // WireframeColor {
+                //     color: Color::Srgba(GREEN),
+                // },
+                // Physics
+                RigidBody::Dynamic,
+                collider,
+                ActiveCollisionTypes::default(),
+                Friction::coefficient(0.7),
+                Restitution::coefficient(0.05),
+                ColliderMassProperties::Density(2.0),
+                // Logic
+                SlicedFragment::new(),
+            ))
+            .id();
+        let frag_center = aabb.center;
+        let impulse = (FRAGMENT_INITIAL_IMPULSE_FACTOR * (frag_center - slice_plane_point)).into();
+        commands.entity(frag_entity).insert(ExternalImpulse {
+            impulse,
+            torque_impulse: Vec3::ZERO,
+        });
+    }
+}
+
+pub fn despawn_fragments(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut fragments_query: Query<(Entity, &mut SlicedFragment)>,
+) {
+    for (entity, mut frag) in fragments_query.iter_mut() {
+        frag.despawn_timer.tick(time.delta());
+        if frag.despawn_timer.finished() {
+            commands.entity(entity).despawn_recursive();
+        }
     }
 }

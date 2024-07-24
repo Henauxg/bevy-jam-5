@@ -1,9 +1,4 @@
-//! Spawn the main level by triggering other observers.
-
-use bevy::{
-    color::palettes::css::{WHITE, YELLOW},
-    prelude::*,
-};
+use bevy::{color::palettes::css::WHITE, prelude::*};
 
 use super::rock::SpawnRock;
 

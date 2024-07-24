@@ -1,9 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use super::Screen;
-use crate::game::{
-    assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack, spawn::mine_scene::SpawnMineScene,
-};
+use crate::game::spawn::mine_scene::SpawnMineScene;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Mine), enter_mine);
@@ -21,7 +19,7 @@ fn enter_mine(mut commands: Commands) {
     // commands.trigger(PlaySoundtrack::Key(SoundtrackKey::Excavation));
 }
 
-fn exit_mine(mut commands: Commands) {
+fn exit_mine(mut _commands: Commands) {
     // We could use [`StateScoped`] on the sound playing entities instead.
     // commands.trigger(PlaySoundtrack::Disable);
 }

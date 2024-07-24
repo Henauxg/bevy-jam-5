@@ -1,10 +1,11 @@
-//! Spawn the player.
-
 use bevy::{gltf::GltfMesh, prelude::*};
+use bevy_rapier3d::prelude::{
+    ActiveCollisionTypes, Collider, ColliderMassProperties, Friction, Restitution, RigidBody,
+};
 
 use crate::{
     game::{
-        assets::{GltfKey, HandleMap, SceneKey},
+        assets::{GltfKey, HandleMap},
         slicing::Sliceable,
     },
     screen::Screen,
@@ -30,20 +31,28 @@ pub const DUMMY_POSITIONS: [Vec3; 3] = [
 #[reflect(Component)]
 pub struct Dummy;
 
+#[derive(Resource)]
+pub struct DummyCachedData {
+    pub collider: Collider,
+}
+
 fn spawn_dummy(
     trigger: Trigger<SpawnDummy>,
     mut commands: Commands,
-    // gltf_handles: Res<HandleMap<GltfKey>>,
-    // scenes_handles: Res<HandleMap<SceneKey>>,
+    dummy_cached_data: Res<DummyCachedData>,
     gltf_handles: Res<HandleMap<GltfKey>>,
     assets_gltf: Res<Assets<Gltf>>,
     assets_gltfmesh: Res<Assets<GltfMesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let gltf_handle = gltf_handles[&GltfKey::Dummy].clone_weak();
-    let Some(gltf) = assets_gltf.get(&gltf_handle) else {
+    let gltf_handle = &gltf_handles[&GltfKey::Dummy];
+    let Some(gltf) = assets_gltf.get(gltf_handle) else {
         return;
     };
-    let gltf_mesh = assets_gltfmesh.get(&gltf.meshes[0]).unwrap();
+    let Some(gltf_mesh) = assets_gltfmesh.get(&gltf.meshes[0]) else {
+        return;
+    };
+    let mesh_handle = &gltf_mesh.primitives[0].mesh;
 
     // TODO Check slots
     let spawn_info = trigger.event();
@@ -53,13 +62,20 @@ fn spawn_dummy(
             StateScoped(Screen::Playing),
             PbrBundle {
                 // scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
-                mesh: gltf_mesh.primitives[0].mesh.clone(),
+                mesh: mesh_handle.clone(),
                 // TODO Material
+                material: materials.add(Color::srgb_u8(50, 50, 50)),
                 transform: Transform::from_translation(DUMMY_POSITIONS[i])
                     .looking_at(Vec3::ZERO, Vec3::Y),
                 ..default()
             },
             Sliceable,
+            RigidBody::Fixed,
+            dummy_cached_data.collider.clone(),
+            ActiveCollisionTypes::default(),
+            Friction::coefficient(0.7),
+            Restitution::coefficient(0.05),
+            ColliderMassProperties::Density(2.0),
         ));
     }
 }

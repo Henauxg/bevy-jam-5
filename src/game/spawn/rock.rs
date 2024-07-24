@@ -1,9 +1,7 @@
-//! Spawn the main level by triggering other observers.
-
 use bevy::{gltf::GltfMesh, prelude::*};
 
 use crate::{
-    game::assets::{GltfKey, HandleMap, SceneKey},
+    game::assets::{GltfKey, HandleMap},
     screen::Screen,
 };
 
