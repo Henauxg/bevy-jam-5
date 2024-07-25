@@ -14,6 +14,14 @@ pub trait Widgets {
 
     /// Spawn a simple text label.
     fn label(&mut self, text: impl Into<String>) -> EntityCommands;
+
+    /// Spawn a simple text label.
+    fn dynamic_label_with_marker<C: Component>(
+        &mut self,
+        title: impl Into<String>,
+        text: impl Into<String>,
+        marker: C,
+    ) -> EntityCommands;
 }
 
 impl<T: Spawn> Widgets for T {
@@ -108,6 +116,51 @@ impl<T: Spawn> Widgets for T {
                         ..default()
                     },
                 ),
+            ));
+        });
+        entity
+    }
+
+    fn dynamic_label_with_marker<C: Component>(
+        &mut self,
+        title: impl Into<String>,
+        text: impl Into<String>,
+        marker: C,
+    ) -> EntityCommands {
+        let mut entity = self.spawn((
+            Name::new("Label"),
+            NodeBundle {
+                style: Style {
+                    width: Px(500.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                ..default()
+            },
+        ));
+        entity.with_children(|children| {
+            children.spawn((
+                Name::new("Label Text"),
+                TextBundle::from_sections([
+                    TextSection {
+                        value: title.into(),
+                        style: TextStyle {
+                            font_size: 24.0,
+                            color: LABEL_TEXT,
+                            ..default()
+                        },
+                    },
+                    TextSection {
+                        value: text.into(),
+                        style: TextStyle {
+                            font_size: 24.0,
+                            color: LABEL_TEXT,
+                            ..default()
+                        },
+                    },
+                ]),
+                marker,
             ));
         });
         entity

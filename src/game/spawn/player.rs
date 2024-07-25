@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game::assets::{HandleMap, SceneKey},
+    game::assets::{HandleMap, SceneKey, ASSETS_SCALE},
     screen::Screen,
 };
 
@@ -35,8 +35,10 @@ fn spawn_player(
         SceneBundle {
             scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
             transform: Transform::from_translation(spawn_info.pos)
-                .looking_at(spawn_info.looking_at, Vec3::Y),
+                .looking_at(spawn_info.looking_at, Vec3::Y)
+                .with_scale(Vec3::splat(ASSETS_SCALE)),
             ..default()
         },
+        Player,
     ));
 }

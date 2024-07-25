@@ -4,17 +4,26 @@ use std::f32::consts::PI;
 
 use bevy::{
     color::palettes::css::{ORANGE_RED, SANDY_BROWN},
+    math::VectorSpace,
     prelude::*,
 };
 use bevy_rapier3d::prelude::{ActiveCollisionTypes, Collider, Friction, Restitution};
 
-use crate::{game::dummies::spawning::SpawnDummySlots, screen::Screen};
+use crate::{
+    game::{
+        assets::{HandleMap, SceneKey, ASSETS_SCALE},
+        dummies::spawning::SpawnDummySlots,
+    },
+    screen::Screen,
+};
 
 use super::player::SpawnPlayer;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_arena);
 }
+
+pub const DEFAULT_GLADIATOR_POS: Vec3 = Vec3::new(0., 0., -1.5);
 
 #[derive(Event, Debug)]
 pub struct SpawnArena;
@@ -24,16 +33,12 @@ fn spawn_arena(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    scenes_handles: Res<HandleMap<SceneKey>>,
 ) {
-    // The only thing we have in our level is a player,
-    // but add things like walls etc. here.
     commands.trigger(SpawnPlayer {
-        pos: Vec3::new(0., 0., -1.5),
-        // TODO Why do I need to invert the look at Z
-        looking_at: Vec3::new(0., 0., -3.),
+        pos: DEFAULT_GLADIATOR_POS,
+        looking_at: Vec3::ZERO,
     });
-
-    // commands.trigger(SpawnDummy { count: 3 });
 
     commands.trigger(SpawnDummySlots);
 
@@ -96,5 +101,18 @@ fn spawn_arena(
         (ActiveCollisionTypes::default()),
         Friction::coefficient(0.7),
         Restitution::coefficient(0.0),
+    ));
+
+    // Arena
+    commands.spawn((
+        Name::new("Arena"),
+        StateScoped(Screen::Playing),
+        SceneBundle {
+            scene: scenes_handles[&SceneKey::Bleacher].clone_weak(),
+            transform: Transform::from_translation(Vec3::ZERO)
+                // .looking_at(spawn_info.looking_at, Vec3::Y)
+                .with_scale(Vec3::splat(ASSETS_SCALE)),
+            ..default()
+        },
     ));
 }

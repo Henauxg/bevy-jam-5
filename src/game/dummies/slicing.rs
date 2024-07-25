@@ -5,7 +5,9 @@ use bevy::{
     asset::{Assets, Handle},
     color::Color,
     core::Name,
+    gltf::{Gltf, GltfMesh},
     input::ButtonInput,
+    log::info,
     math::{Vec3, Vec3A},
     pbr::{PbrBundle, StandardMaterial},
     prelude::{
@@ -24,7 +26,11 @@ use bevy_rapier3d::prelude::{
     Friction, Restitution, RigidBody,
 };
 
-use crate::{screen::Screen, AppSet};
+use crate::{
+    game::assets::{GltfKey, HandleMap, ASSETS_SCALE},
+    screen::Screen,
+    AppSet,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();
@@ -115,6 +121,8 @@ fn slice(
         (With<Sliceable>, Without<Camera>),
     >,
     mut meshes_assets: ResMut<Assets<Mesh>>,
+    gltf_handles: Res<HandleMap<GltfKey>>,
+    assets_gltf: Res<Assets<Gltf>>,
 ) {
     let camera_tranform = cameras.single();
     let event = trigger.event();
@@ -153,12 +161,14 @@ fn slice(
                 &mut commands,
                 transform.translation,
                 local_begin,
+                &gltf_handles,
+                &assets_gltf,
             );
         }
     }
 }
 
-pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 2.;
+pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 18000.;
 
 fn spawn_fragments(
     mesh_fragments: &[Mesh],
@@ -167,7 +177,21 @@ fn spawn_fragments(
     commands: &mut Commands,
     sliced_mesh_pos: Vec3,
     slice_plane_point: Vec3A,
+    // TODO Temporary
+    gltf_handles: &Res<HandleMap<GltfKey>>,
+    assets_gltf: &Res<Assets<Gltf>>,
 ) {
+    let gltf_handle = &gltf_handles[&GltfKey::Dummy];
+    let Some(gltf) = assets_gltf.get(gltf_handle) else {
+        return;
+    };
+    // let Some(gltf_mesh) = assets_gltfmesh.get(&gltf.meshes[0]) else {
+    //     return;
+    // };
+    // let mesh_handle = &gltf_mesh.primitives[0].mesh;
+    // TODO Get mat handle from sliced entity
+    let mat_handle = &gltf.materials[0];
+
     for mesh in mesh_fragments {
         let Some(collider) = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull)
         else {
@@ -179,12 +203,14 @@ fn spawn_fragments(
         let mesh_handle = meshes_assets.add(mesh.clone());
         let frag_entity = commands
             .spawn((
-                Name::new("Dummy fragment"),
+                Name::new("Fragment"),
                 StateScoped(Screen::Playing),
                 PbrBundle {
                     mesh: mesh_handle.clone(),
-                    transform: Transform::from_translation(sliced_mesh_pos),
-                    material: materials.add(Color::srgb_u8(124, 144, 255)),
+                    transform: Transform::from_translation(sliced_mesh_pos)
+                        .with_scale(Vec3::splat(ASSETS_SCALE)), // TODO Retrive scale of the sliced entity
+                    // material: materials.add(Color::srgb_u8(124, 144, 255)),
+                    material: mat_handle.clone(),
                     ..default()
                 },
                 // Sliceable,
@@ -205,6 +231,7 @@ fn spawn_fragments(
             .id();
         let frag_center = aabb.center;
         let impulse = (FRAGMENT_INITIAL_IMPULSE_FACTOR * (frag_center - slice_plane_point)).into();
+        info!("Impulse is {}", impulse);
         commands.entity(frag_entity).insert(ExternalImpulse {
             impulse,
             torque_impulse: Vec3::ZERO,

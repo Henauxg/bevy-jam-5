@@ -5,11 +5,13 @@ use bevy_rapier3d::prelude::{
 
 use crate::{
     game::{
-        assets::{GltfKey, HandleMap},
+        assets::{GltfKey, HandleMap, ASSETS_SCALE},
         dummies::slicing::Sliceable,
     },
     screen::Screen,
 };
+
+use super::arena::DEFAULT_GLADIATOR_POS;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_dummy);
@@ -38,8 +40,9 @@ fn spawn_dummy(
     gltf_handles: Res<HandleMap<GltfKey>>,
     assets_gltf: Res<Assets<Gltf>>,
     assets_gltfmesh: Res<Assets<GltfMesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    // TODO Cache this in a Resource
     let gltf_handle = &gltf_handles[&GltfKey::Dummy];
     let Some(gltf) = assets_gltf.get(gltf_handle) else {
         return;
@@ -48,6 +51,7 @@ fn spawn_dummy(
         return;
     };
     let mesh_handle = &gltf_mesh.primitives[0].mesh;
+    let mat_handle = &gltf.materials[0];
 
     let spawn_info = trigger.event();
     commands.spawn((
@@ -57,8 +61,11 @@ fn spawn_dummy(
             // scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
             mesh: mesh_handle.clone(),
             // TODO Material
-            material: materials.add(Color::srgb_u8(50, 50, 50)),
-            transform: Transform::from_translation(spawn_info.pos).looking_at(Vec3::ZERO, Vec3::Y),
+            // material: materials.add(Color::srgb_u8(50, 50, 50)),
+            material: mat_handle.clone(),
+            transform: Transform::from_translation(spawn_info.pos)
+                .looking_at(DEFAULT_GLADIATOR_POS, Vec3::Y)
+                .with_scale(Vec3::splat(ASSETS_SCALE)),
             ..default()
         },
         // Physic

@@ -23,6 +23,9 @@ pub(super) fn plugin(app: &mut App) {
 
     app.register_type::<HandleMap<GltfKey>>();
     app.init_resource::<HandleMap<GltfKey>>();
+
+    app.register_type::<HandleMap<AnimationKey>>();
+    app.init_resource::<HandleMap<AnimationKey>>();
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
@@ -121,7 +124,9 @@ impl FromWorld for HandleMap<SoundtrackKey> {
 pub enum SceneKey {
     Rock,
     Gladiator,
+    Sword,
     Dummy,
+    Bleacher,
 }
 
 impl AssetKey for SceneKey {
@@ -141,10 +146,57 @@ impl FromWorld for HandleMap<SceneKey> {
                 SceneKey::Dummy,
                 asset_server.load("models/dummy.glb#Scene0"),
             ),
+            (
+                SceneKey::Sword,
+                asset_server.load("models/sword.glb#Scene0"),
+            ),
+            (
+                SceneKey::Bleacher,
+                asset_server.load("models/bleacher.glb#Scene0"),
+            ),
         ]
         .into()
     }
 }
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum AnimationKey {
+    GladiatorWalk,
+    GladiatorIdle,
+    GladiatorSlash,
+}
+
+impl AssetKey for AnimationKey {
+    type Asset = AnimationClip;
+}
+
+impl FromWorld for HandleMap<AnimationKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (
+                AnimationKey::GladiatorWalk,
+                asset_server.load(GltfAssetLabel::Animation(0).from_asset("models/gladiator.glb")),
+            ),
+            // Slash too ?
+            // (
+            //     AnimationKey::GladiatorIdle,
+            //     asset_server.load(GltfAssetLabel::Animation(2).from_asset("models/gladiator.glb")),
+            // ),
+            (
+                AnimationKey::GladiatorSlash,
+                asset_server.load(GltfAssetLabel::Animation(1).from_asset("models/gladiator.glb")),
+            ),
+            (
+                AnimationKey::GladiatorIdle,
+                asset_server.load(GltfAssetLabel::Animation(4).from_asset("models/gladiator.glb")),
+            ),
+        ]
+        .into()
+    }
+}
+
+pub const ASSETS_SCALE: f32 = 0.015;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum GltfKey {
@@ -236,12 +288,14 @@ pub fn all_assets_loaded(
     soundtrack_handles: Res<HandleMap<SoundtrackKey>>,
     gltf_handles: Res<HandleMap<GltfKey>>,
     scene_handles: Res<HandleMap<SceneKey>>,
+    animation_handles: Res<HandleMap<AnimationKey>>,
 ) -> bool {
     image_handles.all_loaded(&asset_server)
         && sfx_handles.all_loaded(&asset_server)
         && soundtrack_handles.all_loaded(&asset_server)
         && gltf_handles.all_loaded(&asset_server)
         && scene_handles.all_loaded(&asset_server)
+        && animation_handles.all_loaded(&asset_server)
 }
 
 pub fn all_assets_processed(assets_processing: Res<AssetsProcessing>) -> bool {

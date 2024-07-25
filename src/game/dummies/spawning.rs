@@ -122,6 +122,7 @@ pub fn spawn_dummies(
 ) {
     dummies.spawn_timer.tick(time.delta());
 
+    // TODO Incorrect sub
     if dummies.spawn_timer.finished()
         && dummies.free_slot_indexes.len() > 0
         && dummies.dummy_slots.len() - dummies.free_slot_indexes.len() < dummies.max_dummy_count

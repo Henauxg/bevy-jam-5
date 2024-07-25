@@ -26,6 +26,9 @@ rand = "0.8"
 bevy_mod_raycast = "0.18.0"
 bevy_rapier3d = "0.27.0"
 
+# TODO Remove
+bevy-inspector-egui = "0.25.1"
+
 
 [features]
 default = [
