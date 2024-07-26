@@ -4,7 +4,6 @@ use bevy::{
     app::{App, Update},
     color::palettes::css::RED,
     ecs::component::StorageType,
-    log::info,
     math::Vec3,
     prelude::{
         in_state, Children, Commands, Component, Condition, Entity, Event, Gizmos,
@@ -110,7 +109,7 @@ pub fn free_dummy_slot(
 
     if let Ok(dummy) = dummies_query.get(slice_info.entity) {
         dummies.free_slot_indexes.push(dummy.0);
-        info!("Dummy slot {} is free", dummy.0);
+        // info!("Dummy slot {} is free", dummy.0);
     }
 }
 
@@ -139,7 +138,7 @@ pub fn spawn_dummies(
         });
         dummies.spawn_timer.reset();
         dummies.free_slot_indexes.swap_remove(random_index);
-        info!("Dummy slot {} is occupied", free_slot_index);
+        // info!("Dummy slot {} is occupied", free_slot_index);
     }
 }
 

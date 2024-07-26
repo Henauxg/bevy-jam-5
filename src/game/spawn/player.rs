@@ -23,7 +23,6 @@ pub struct Player;
 fn spawn_player(
     trigger: Trigger<SpawnPlayer>,
     mut commands: Commands,
-    // gltf_handles: Res<HandleMap<GltfKey>>,
     scenes_handles: Res<HandleMap<SceneKey>>,
 ) {
     let spawn_info = trigger.event();

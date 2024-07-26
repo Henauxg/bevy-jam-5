@@ -11,14 +11,18 @@ pub(super) fn plugin(app: &mut App) {
         OnEnter(Screen::Loading),
         setup_player_animations.before(animate_targets),
     );
-    app.add_systems(Update, (attach_player_animations, attach_equipments));
-    // app.observe(attach_equipments);
+    app.add_systems(
+        Update,
+        (attach_player_animations, attach_equipments, return_to_idle),
+    );
+    app.observe(play_slash_animation);
 }
 
 use crate::screen::Screen;
 
 use super::{
     assets::{AnimationKey, HandleMap},
+    dummies::slicing::SlicedEvent,
     spawn::player::Player,
 };
 
@@ -27,7 +31,7 @@ pub const LEFT_HAND_SLOT: &str = "EquipmentHandle.L";
 
 #[derive(Resource)]
 pub struct PlayerAnimations {
-    walk_anim: AnimationNodeIndex,
+    _walk_anim: AnimationNodeIndex,
     idle_anim: AnimationNodeIndex,
     slash_anim: AnimationNodeIndex,
     graph: Handle<AnimationGraph>,
@@ -58,19 +62,20 @@ fn setup_player_animations(
 
     commands.insert_resource(PlayerAnimations {
         idle_anim,
-        walk_anim,
+        _walk_anim: walk_anim,
         slash_anim,
         graph: graph.clone(),
     });
 }
 
+// TODO With<Player>, .. But only the scene root has the Player marker, not the animation player entity
 fn attach_player_animations(
     mut commands: Commands,
-    mut players: Query<(Entity, &mut AnimationPlayer), (Added<AnimationPlayer>)>, // TODOD With<Player>, .. But only the scene root has the Player marker, not the animation player entity
+    mut players: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
     animations: Res<PlayerAnimations>,
 ) {
-    for (entity, mut animation_player) in &mut players {
-        info!("attach_player_animations on entity {:?}", entity);
+    for (entity, mut animation_player) in players.iter_mut() {
+        // info!("attach_player_animations on entity {:?}", entity);
         let mut transitions = AnimationTransitions::new();
 
         // Make sure to start the animation via the `AnimationTransitions`
@@ -157,4 +162,47 @@ pub fn find_child_with_name_containing(
         }
     }
     None
+}
+
+// TODO With<Player>, .. But only the scene root has the Player marker, not the animation player entity
+fn play_slash_animation(
+    _trigger: Trigger<SlicedEvent>,
+    animations: Res<PlayerAnimations>,
+    mut players_query: Query<(Entity, &mut AnimationPlayer, &mut AnimationTransitions)>,
+) {
+    for (_entity, mut animation_player, mut transitions) in players_query.iter_mut() {
+        // info!("Transition to slash animation");
+        transitions
+            .play(
+                &mut animation_player,
+                animations.slash_anim,
+                Duration::from_millis(50),
+            )
+            .set_speed(2.5);
+
+        // TODO Delay before slice to wait for the animation to finish
+    }
+}
+
+// TODO With<Player>, .. But only the scene root has the Player marker, not the animation player entity
+fn return_to_idle(
+    animations: Res<PlayerAnimations>,
+    mut players_query: Query<(Entity, &mut AnimationPlayer, &mut AnimationTransitions)>,
+) {
+    for (_entity, mut animation_player, mut transitions) in players_query.iter_mut() {
+        let Some((_, anim)) = animation_player.playing_animations().next() else {
+            continue;
+        };
+
+        if anim.is_finished() {
+            // info!("Transition to Idle animation");
+            transitions
+                .play(
+                    &mut animation_player,
+                    animations.idle_anim,
+                    Duration::from_millis(50),
+                )
+                .set_speed(1.0);
+        }
+    }
 }
