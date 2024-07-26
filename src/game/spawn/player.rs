@@ -1,5 +1,3 @@
-//! Spawn the player.
-
 use bevy::prelude::*;
 
 use crate::{

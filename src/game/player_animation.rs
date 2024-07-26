@@ -5,16 +5,26 @@ use std::time::Duration;
 use bevy::{animation::animate_targets, prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
+    app.register_type::<EquipmentSlot>();
+    app.register_type::<EquipmentToAttach>();
     app.add_systems(
         OnEnter(Screen::Loading),
         setup_player_animations.before(animate_targets),
     );
-    app.add_systems(Update, attach_player_animations);
+    app.add_systems(Update, (attach_player_animations, attach_equipments));
+    // app.observe(attach_equipments);
 }
 
 use crate::screen::Screen;
 
-use super::assets::{AnimationKey, HandleMap};
+use super::{
+    assets::{AnimationKey, HandleMap},
+    spawn::player::Player,
+};
+
+pub const RIGHT_HAND_SLOT: &str = "EquipmentHandle.R";
+pub const LEFT_HAND_SLOT: &str = "EquipmentHandle.L";
+
 #[derive(Resource)]
 pub struct PlayerAnimations {
     walk_anim: AnimationNodeIndex,
@@ -57,11 +67,8 @@ fn setup_player_animations(
 fn attach_player_animations(
     mut commands: Commands,
     mut players: Query<(Entity, &mut AnimationPlayer), (Added<AnimationPlayer>)>, // TODOD With<Player>, .. But only the scene root has the Player marker, not the animation player entity
-    // anim_handles: Res<HandleMap<AnimationKey>>,
     animations: Res<PlayerAnimations>,
-    // mut graphs: ResMut<Assets<AnimationGraph>>,
 ) {
-    // info!("attach_player_animations ");
     for (entity, mut animation_player) in &mut players {
         info!("attach_player_animations on entity {:?}", entity);
         let mut transitions = AnimationTransitions::new();
@@ -79,4 +86,75 @@ fn attach_player_animations(
             .insert(animations.graph.clone())
             .insert(transitions);
     }
+}
+
+#[derive(Debug, Clone, Reflect, PartialEq, Eq)]
+pub enum EquipmentSlot {
+    RightHand,
+    LeftHand,
+}
+
+impl EquipmentSlot {
+    pub fn to_name(&self) -> &str {
+        match self {
+            EquipmentSlot::RightHand => RIGHT_HAND_SLOT,
+            EquipmentSlot::LeftHand => LEFT_HAND_SLOT,
+        }
+    }
+}
+
+#[derive(Component, Clone, Reflect)]
+pub struct EquipmentToAttach {
+    pub slot: EquipmentSlot,
+}
+
+fn attach_equipments(
+    mut commands: Commands,
+    players_query: Query<Entity, With<Player>>,
+    names_query: Query<&Name>,
+    children_query: Query<&Children>,
+    equipments_to_attach_query: Query<(Entity, &EquipmentToAttach)>,
+) {
+    let Ok(player_entity) = players_query.get_single() else {
+        return;
+    };
+
+    for (equipment_entity, equipment) in equipments_to_attach_query.iter() {
+        let attach_point_entity = find_child_with_name_containing(
+            player_entity,
+            equipment.slot.to_name(),
+            &names_query,
+            &children_query,
+        );
+
+        if let Some(parent_entity) = attach_point_entity {
+            commands.entity(equipment_entity).set_parent(parent_entity);
+            commands
+                .entity(equipment_entity)
+                .remove::<EquipmentToAttach>();
+        }
+    }
+}
+
+pub fn find_child_with_name_containing(
+    root_entity: Entity,
+    name_to_match: &str,
+    names_query: &Query<&Name>,
+    children_query: &Query<&Children>,
+) -> Option<Entity> {
+    let mut queue = Vec::new();
+    queue.push(root_entity);
+    while let Some(current_entity) = queue.pop() {
+        let name = names_query.get(current_entity);
+        if let Ok(name) = name {
+            if name.as_str() == name_to_match {
+                return Some(current_entity);
+            }
+        }
+        let children = children_query.get(current_entity);
+        if let Ok(children) = children {
+            queue.extend(children);
+        }
+    }
+    None
 }

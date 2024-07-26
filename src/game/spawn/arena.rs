@@ -16,7 +16,7 @@ use crate::{
     screen::Screen,
 };
 
-use super::player::SpawnPlayer;
+use super::{player::SpawnPlayer, sword::SpawnSword};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_arena);
@@ -38,6 +38,7 @@ fn spawn_arena(
         pos: DEFAULT_GLADIATOR_POS,
         looking_at: Vec3::ZERO,
     });
+    commands.trigger(SpawnSword);
 
     commands.trigger(SpawnDummySlots);
 

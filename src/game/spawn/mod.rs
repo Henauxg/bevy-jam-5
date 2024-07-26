@@ -9,11 +9,13 @@ pub mod dummy;
 pub mod mine_scene;
 pub mod player;
 pub mod rock;
+pub mod sword;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         arena::plugin,
         player::plugin,
+        sword::plugin,
         mine_scene::plugin,
         rock::plugin,
         dummy::plugin,
