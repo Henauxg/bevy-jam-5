@@ -14,10 +14,7 @@ pub(super) fn plugin(app: &mut App) {
 
 use crate::screen::Screen;
 
-use super::{
-    assets::{AnimationKey, HandleMap},
-    spawn::player::Player,
-};
+use super::assets::{AnimationKey, HandleMap};
 #[derive(Resource)]
 pub struct PlayerAnimations {
     walk_anim: AnimationNodeIndex,

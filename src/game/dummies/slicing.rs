@@ -3,21 +3,19 @@ use std::time::Duration;
 use bevy::{
     app::{App, Update},
     asset::{Assets, Handle},
-    color::Color,
     core::Name,
-    gltf::{Gltf, GltfMesh},
+    gltf::Gltf,
     input::ButtonInput,
     log::info,
     math::{Vec3, Vec3A},
     pbr::{PbrBundle, StandardMaterial},
     prelude::{
-        Camera, Commands, Component, DespawnRecursiveExt, Entity, Event, Gizmos, GlobalTransform,
-        IntoSystemConfigs, Mesh, MouseButton, Query, Res, ResMut, Resource, StateScoped, Transform,
-        Trigger, With, Without,
+        default, Camera, Commands, Component, DespawnRecursiveExt, Entity, Event, Gizmos,
+        GlobalTransform, IntoSystemConfigs, Mesh, MouseButton, Query, Res, ResMut, Resource,
+        StateScoped, Transform, Trigger, With, Without,
     },
     reflect::Reflect,
     time::{Time, Timer, TimerMode},
-    utils::default,
 };
 use bevy_ghx_destruction::{slicing::slicing::slice_bevy_mesh, types::Plane};
 use bevy_mod_raycast::{cursor::CursorRay, prelude::Raycast};
@@ -72,9 +70,15 @@ pub struct SliceEvent {
 }
 
 #[derive(Resource, Debug, Clone, Default, Reflect)]
-struct SlicerState {
-    begin: Vec3,
-    end: Vec3,
+enum SlicerState {
+    #[default]
+    Idle,
+    NoTarget,
+    FirstHit(Vec3, Entity),
+    Slicing {
+        start: (Vec3, Entity),
+        last_hit: Vec3,
+    },
 }
 
 fn detect_slices(
@@ -84,30 +88,84 @@ fn detect_slices(
     mut slicer_state: ResMut<SlicerState>,
     mut raycast: Raycast,
     mut gizmos: Gizmos,
+    sliceables_query: Query<(), With<Sliceable>>,
 ) {
     let Some(cursor_ray) = cursor_ray.0 else {
         return;
     };
 
-    raycast.debug_cast_ray(cursor_ray, &default(), &mut gizmos);
-    let hits = raycast.cast_ray(cursor_ray, &default());
-
-    for (entity, intersection) in hits.iter() {
-        let pos = intersection.position();
-
-        if mouse.just_pressed(MouseButton::Left) {
-            slicer_state.begin = pos;
-        }
-        if mouse.just_released(MouseButton::Left) {
-            slicer_state.end = pos;
-            if slicer_state.begin != slicer_state.end {
-                commands.trigger(SliceEvent {
-                    begin: slicer_state.begin,
-                    end: slicer_state.end,
-                    entity: *entity,
-                });
+    if mouse.pressed(MouseButton::Left) {
+        raycast.debug_cast_ray(cursor_ray, &default(), &mut gizmos);
+        let hits = raycast.cast_ray(cursor_ray, &default());
+        match *slicer_state {
+            SlicerState::Idle => {
+                if hits.is_empty() {
+                    *slicer_state = SlicerState::NoTarget;
+                } else {
+                    let hit = &hits[0];
+                    let sliceable = sliceables_query.get(hit.0);
+                    if sliceable.is_ok() {
+                        *slicer_state = SlicerState::FirstHit(hits[0].1.position(), hits[0].0);
+                    }
+                }
             }
+            SlicerState::NoTarget => {
+                if !hits.is_empty() {
+                    let hit = &hits[0];
+                    let sliceable = sliceables_query.get(hit.0);
+                    if sliceable.is_ok() {
+                        *slicer_state = SlicerState::FirstHit(hits[0].1.position(), hits[0].0);
+                    }
+                }
+            }
+            SlicerState::FirstHit(pos, entity) => {
+                if hits.is_empty() {
+                    *slicer_state = SlicerState::NoTarget;
+                } else {
+                    let hit = &hits[0];
+                    if hit.0 == entity && hit.1.position() != pos {
+                        *slicer_state = SlicerState::Slicing {
+                            start: (pos, entity),
+                            last_hit: hits[0].1.position(),
+                        };
+                    } else if hit.0 != entity {
+                        let sliceable = sliceables_query.get(hit.0);
+                        if sliceable.is_ok() {
+                            *slicer_state = SlicerState::FirstHit(hit.1.position(), hit.0);
+                        }
+                    }
+                }
+            }
+            SlicerState::Slicing { start, last_hit: _ } => {
+                if !hits.is_empty() {
+                    let hit = &hits[0];
+                    if hit.0 == start.1 && hit.1.position() != start.0 {
+                        *slicer_state = SlicerState::Slicing {
+                            start,
+                            last_hit: hit.1.position(),
+                        };
+                    } else if hit.0 != start.1 {
+                        let sliceable = sliceables_query.get(hit.0);
+                        if sliceable.is_ok() {
+                            *slicer_state = SlicerState::FirstHit(hit.1.position(), hit.0);
+                        }
+                    }
+                }
+            }
+        };
+    } else {
+        match *slicer_state {
+            SlicerState::Slicing { start, last_hit } => {
+                let slice_event = SliceEvent {
+                    begin: start.0,
+                    end: last_hit,
+                    entity: start.1,
+                };
+                commands.trigger(slice_event);
+            }
+            _ => (),
         }
+        *slicer_state = SlicerState::Idle;
     }
 }
 
@@ -125,16 +183,16 @@ fn slice(
     assets_gltf: Res<Assets<Gltf>>,
 ) {
     let camera_tranform = cameras.single();
-    let event = trigger.event();
-    if let Ok((transform, global_transform, mesh_handle)) = sliceables.get(event.entity) {
+    let slice = trigger.event();
+    if let Ok((transform, global_transform, mesh_handle)) = sliceables.get(slice.entity) {
         let mesh = meshes_assets.get(mesh_handle).unwrap();
 
         let inver_trsfrm = global_transform.affine().inverse();
         let local_cam = inver_trsfrm.matrix3 * Vec3A::from(camera_tranform.translation)
             + inver_trsfrm.translation;
         let local_begin =
-            inver_trsfrm.matrix3 * Vec3A::from(event.begin) + inver_trsfrm.translation;
-        let local_end = inver_trsfrm.matrix3 * Vec3A::from(event.end) + inver_trsfrm.translation;
+            inver_trsfrm.matrix3 * Vec3A::from(slice.begin) + inver_trsfrm.translation;
+        let local_end = inver_trsfrm.matrix3 * Vec3A::from(slice.end) + inver_trsfrm.translation;
         let local_qr = local_begin - local_cam;
         let local_qs = local_end - local_cam;
 
@@ -142,7 +200,7 @@ fn slice(
 
         // let optional_mesh_fragments =;
         if let Some(mesh_fragments) = slice_bevy_mesh(plane, mesh) {
-            commands.entity(event.entity).despawn();
+            commands.entity(slice.entity).despawn();
 
             // commands.spawn((
             //     PbrBundle {
@@ -172,7 +230,7 @@ pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 18000.;
 
 fn spawn_fragments(
     mesh_fragments: &[Mesh],
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
     meshes_assets: &mut ResMut<Assets<Mesh>>,
     commands: &mut Commands,
     sliced_mesh_pos: Vec3,

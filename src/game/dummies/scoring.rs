@@ -1,8 +1,6 @@
-use std::process::Command;
-
 use bevy::{
     app::App,
-    prelude::{Commands, Query, ResMut, Trigger},
+    prelude::{Commands, Query, Trigger},
 };
 
 use crate::game::{
@@ -10,7 +8,7 @@ use crate::game::{
     spawn::dummy::Dummy,
 };
 
-use super::{slicing::SliceEvent, spawning::Dummies};
+use super::slicing::SliceEvent;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(update_score);
@@ -24,7 +22,7 @@ pub fn update_score(
 ) {
     let slice_info = trigger.event();
 
-    if let Ok(dummy) = dummies_query.get(slice_info.entity) {
+    if let Ok(_dummy) = dummies_query.get(slice_info.entity) {
         commands.trigger(ScoreAction(ScoreActionType::Good))
         //TODO != ScoreActionType based on the dummy data
     }

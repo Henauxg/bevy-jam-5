@@ -4,7 +4,6 @@ use std::f32::consts::PI;
 
 use bevy::{
     color::palettes::css::{ORANGE_RED, SANDY_BROWN},
-    math::VectorSpace,
     prelude::*,
 };
 use bevy_rapier3d::prelude::{ActiveCollisionTypes, Collider, Friction, Restitution};
