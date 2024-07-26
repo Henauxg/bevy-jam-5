@@ -30,7 +30,7 @@ use super::{
 pub const RIGHT_HAND_SLOT: &str = "EquipmentHandle.R";
 pub const LEFT_HAND_SLOT: &str = "EquipmentHandle.L";
 
-pub const PLAYER_SLASH_ANIMATION_SPEED: f32 = 3.2;
+pub const PLAYER_SLASH_ANIMATION_SPEED: f32 = 3.4;
 
 #[derive(Resource)]
 pub struct PlayerAnimations {
