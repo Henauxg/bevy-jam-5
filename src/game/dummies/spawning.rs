@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::{
     app::{App, Update},
-    color::palettes::css::RED,
+    color::palettes::css::{GREEN, RED},
     ecs::component::StorageType,
     math::Vec3,
     prelude::{
@@ -24,24 +24,29 @@ use crate::{
 
 use super::slicing::SliceEvent;
 
+pub const DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS: u64 = 3000;
+
 pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<Dummies>();
-    app.register_type::<Dummies>();
+    app.init_resource::<DummiesData>();
+    app.register_type::<DummiesData>();
 
     app.add_systems(
         Update,
-        spawn_dummies.run_if(in_state(Screen::Playing).and_then(arena_is_in_dummies_mode)),
+        (free_dummy_slots, spawn_dummies)
+            .run_if(in_state(Screen::Playing).and_then(arena_is_in_dummies_mode)),
     );
 
     app.observe(spawn_dummy_slots);
-    app.observe(free_dummy_slot);
+    app.observe(queue_dummy_slot_free);
     app.observe(setup_dummies_mode_data);
 }
 
 #[derive(Resource, Default, Reflect)]
-pub struct Dummies {
+pub struct DummiesData {
     dummy_slots: Vec<Entity>,
     free_slot_indexes: Vec<usize>,
+    slot_indexes_to_free: Vec<(usize, Timer)>,
+
     spawn_timer: Timer,
     max_dummy_count: usize,
 }
@@ -52,18 +57,18 @@ impl Component for DummySlot {
     const STORAGE_TYPE: bevy::ecs::component::StorageType = StorageType::Table;
     fn register_component_hooks(hooks: &mut bevy::ecs::component::ComponentHooks) {
         hooks.on_add(|mut world, entity, _comp_id| {
-            let mut dummies = world.resource_mut::<Dummies>();
+            let mut dummies = world.resource_mut::<DummiesData>();
             let slot_count = dummies.dummy_slots.len();
             dummies.free_slot_indexes.push(slot_count);
             dummies.dummy_slots.push(entity);
         });
         hooks.on_remove(|mut world, entity, _comp_id| {
-            let slots = &world.resource_mut::<Dummies>().dummy_slots;
+            let slots = &world.resource_mut::<DummiesData>().dummy_slots;
             let Some(slot_index) = slots.iter().position(|slot| *slot == entity) else {
                 return;
             };
             world
-                .resource_mut::<Dummies>()
+                .resource_mut::<DummiesData>()
                 .dummy_slots
                 .swap_remove(slot_index);
         });
@@ -92,7 +97,7 @@ pub struct StartDummiesMinigame;
 
 pub fn setup_dummies_mode_data(
     _trigger: Trigger<StartDummiesMinigame>,
-    mut dummies: ResMut<Dummies>,
+    mut dummies: ResMut<DummiesData>,
     mut arena_mode: ResMut<ArenaMode>,
 ) {
     dummies.spawn_timer = Timer::new(Duration::from_millis(1500), TimerMode::Once);
@@ -100,23 +105,42 @@ pub fn setup_dummies_mode_data(
     *arena_mode = ArenaMode::Dummies;
 }
 
-pub fn free_dummy_slot(
+pub fn queue_dummy_slot_free(
     trigger: Trigger<SliceEvent>,
-    mut dummies: ResMut<Dummies>,
+    mut dummies: ResMut<DummiesData>,
     dummies_query: Query<&Dummy>,
 ) {
     let slice_info = trigger.event();
 
     if let Ok(dummy) = dummies_query.get(slice_info.entity) {
-        dummies.free_slot_indexes.push(dummy.0);
-        // info!("Dummy slot {} is free", dummy.0);
+        dummies.slot_indexes_to_free.push((
+            dummy.0,
+            Timer::new(
+                Duration::from_millis(DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS),
+                TimerMode::Once,
+            ),
+        ));
+    }
+}
+
+pub fn free_dummy_slots(time: Res<Time>, mut dummies: ResMut<DummiesData>) {
+    let mut indexes_to_remove = Vec::new();
+    for (index, (_slot, timer)) in dummies.slot_indexes_to_free.iter_mut().enumerate() {
+        timer.tick(time.delta());
+        if timer.finished() {
+            indexes_to_remove.push(index);
+        }
+    }
+    for i in indexes_to_remove.iter() {
+        let slot = dummies.slot_indexes_to_free.remove(*i);
+        dummies.free_slot_indexes.push(slot.0);
     }
 }
 
 pub fn spawn_dummies(
     mut commands: Commands,
     time: Res<Time>,
-    mut dummies: ResMut<Dummies>,
+    mut dummies: ResMut<DummiesData>,
     dummy_slots_query: Query<&Transform, (With<DummySlot>, Without<Children>)>,
 ) {
     dummies.spawn_timer.tick(time.delta());
@@ -142,9 +166,25 @@ pub fn spawn_dummies(
     }
 }
 
-pub fn debug_draw_dummy_slots(mut gizmos: Gizmos, dummy_slots: Query<(&Transform, &DummySlot)>) {
-    // TODO Draw as green for free slots
-    for (slot_transform, _slot) in dummy_slots.iter() {
-        gizmos.sphere(slot_transform.translation, slot_transform.rotation, 1., RED);
+pub fn debug_draw_dummy_slots(
+    mut gizmos: Gizmos,
+    dummies: Res<DummiesData>,
+    dummy_slots: Query<&Transform, With<DummySlot>>,
+) {
+    for (slot_index, &slot_entity) in dummies.dummy_slots.iter().enumerate() {
+        let Ok(slot_transform) = dummy_slots.get(slot_entity) else {
+            continue;
+        };
+        let color = if dummies.free_slot_indexes.contains(&slot_index) {
+            GREEN
+        } else {
+            RED
+        };
+        gizmos.sphere(
+            slot_transform.translation,
+            slot_transform.rotation,
+            1.,
+            color,
+        );
     }
 }
