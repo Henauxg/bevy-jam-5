@@ -2,12 +2,10 @@
 
 use bevy::prelude::*;
 
-mod animation2d;
 pub mod arena;
 pub mod assets;
 pub mod audio;
 pub mod dummies;
-mod movement;
 pub mod player_animation;
 pub mod score;
 pub mod spawn;
