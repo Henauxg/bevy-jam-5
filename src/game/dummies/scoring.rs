@@ -8,14 +8,14 @@ use crate::game::{
     spawn::dummy::Dummy,
 };
 
-use super::slicing::SlicedEvent;
+use super::slicing::SliceEvent;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(update_score);
 }
 
 pub fn update_score(
-    trigger: Trigger<SlicedEvent>,
+    trigger: Trigger<SliceEvent>,
     mut commands: Commands,
     // mut dummies: ResMut<Dummies>,
     dummies_query: Query<&Dummy>,

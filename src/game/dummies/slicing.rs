@@ -29,20 +29,24 @@ use crate::{
     AppSet,
 };
 
+pub const PLAYER_SLICE_FRAGMENTATION_DELAY_MS: u64 = 250;
+
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();
     app.register_type::<SliceAttemptEvent>();
-    app.register_type::<SlicedEvent>();
+    app.register_type::<SliceEvent>();
     app.register_type::<SlicerState>();
+    app.register_type::<FragmentationQueue>();
 
     app.add_systems(
         Update,
         (
             detect_slices.in_set(AppSet::RecordInput),
-            despawn_fragments.in_set(AppSet::Update),
+            (dequeue_fragmentations, despawn_fragments).in_set(AppSet::Update),
         ),
     );
     app.init_resource::<SlicerState>();
+    app.init_resource::<FragmentationQueue>();
 
     app.observe(slice);
     app.observe(fragment_entity);
@@ -65,15 +69,15 @@ impl SlicedFragment {
 
 #[derive(Event, Debug, Clone, Reflect)]
 /// May not slice the entity, depending on the positions
-pub struct SliceAttemptEvent {
+struct SliceAttemptEvent {
     pub begin: Vec3,
     pub end: Vec3,
     pub entity: Entity,
 }
 
 #[derive(Event, Debug, Clone, Reflect)]
-/// An entity has been sliced
-pub struct SlicedEvent {
+/// An entity is being sliced
+pub struct SliceEvent {
     pub entity: Entity,
 }
 
@@ -83,6 +87,11 @@ struct SpawnFragments {
     sliced_transform: Transform,
     mesh_fragments: [Mesh; 2],
     slice_start_pos: Vec3,
+}
+
+#[derive(Resource, Default, Reflect)]
+struct FragmentationQueue {
+    queue: Vec<(SpawnFragments, Timer)>,
 }
 
 #[derive(Resource, Debug, Clone, Default, Reflect)]
@@ -188,13 +197,13 @@ fn detect_slices(
 fn slice(
     trigger: Trigger<SliceAttemptEvent>,
     mut commands: Commands,
-
+    meshes_assets: Res<Assets<Mesh>>,
+    mut fragmentation_queue: ResMut<FragmentationQueue>,
     cameras: Query<&mut Transform, With<Camera>>,
     sliceables: Query<
         (&Transform, &GlobalTransform, &Handle<Mesh>),
         (With<Sliceable>, Without<Camera>),
     >,
-    meshes_assets: Res<Assets<Mesh>>,
 ) {
     let camera_tranform = cameras.single();
     let slice = trigger.event();
@@ -223,17 +232,45 @@ fn slice(
             //     SliceableObject,
             // ));
             // Let other systems react to the slice event with a valid entity
-            commands.trigger(SlicedEvent {
+            commands.trigger(SliceEvent {
                 entity: slice.entity,
             });
-            // Then despawn it
-            commands.trigger(SpawnFragments {
+            // Set it as non sliceable
+            commands.entity(slice.entity).remove::<Sliceable>();
+            // Queue it to be despawned and fragmented
+            let fragments_spawn = SpawnFragments {
                 sliced_entity: slice.entity,
                 slice_start_pos: slice.begin,
                 sliced_transform: transform.clone(),
                 mesh_fragments,
-            });
+            };
+            fragmentation_queue.queue.push((
+                fragments_spawn,
+                // TODO Hardcode wait duration is hacky. Find a better way
+                Timer::new(
+                    Duration::from_millis(PLAYER_SLICE_FRAGMENTATION_DELAY_MS),
+                    TimerMode::Once,
+                ),
+            ));
         }
+    }
+}
+
+fn dequeue_fragmentations(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut fragmentation_queue: ResMut<FragmentationQueue>,
+) {
+    let mut ready_fragmentations = Vec::new();
+    for (index, fragmentation) in fragmentation_queue.queue.iter_mut().enumerate() {
+        fragmentation.1.tick(time.delta());
+        if fragmentation.1.finished() {
+            ready_fragmentations.push(index);
+        }
+    }
+    for i in ready_fragmentations {
+        let fragmentation = fragmentation_queue.queue.remove(i); // Cannot swap remove without updating the indexes
+        commands.trigger(fragmentation.0);
     }
 }
 
@@ -243,7 +280,7 @@ pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 3000.;
 fn fragment_entity(
     trigger: Trigger<SpawnFragments>,
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut _materials: ResMut<Assets<StandardMaterial>>,
     mut meshes_assets: ResMut<Assets<Mesh>>,
     gltf_handles: Res<HandleMap<GltfKey>>,
     assets_gltf: Res<Assets<Gltf>>,

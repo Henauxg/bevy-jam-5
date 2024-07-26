@@ -22,7 +22,7 @@ use crate::{
     screen::Screen,
 };
 
-use super::slicing::SlicedEvent;
+use super::slicing::SliceEvent;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Dummies>();
@@ -101,7 +101,7 @@ pub fn setup_dummies_mode_data(
 }
 
 pub fn free_dummy_slot(
-    trigger: Trigger<SlicedEvent>,
+    trigger: Trigger<SliceEvent>,
     mut dummies: ResMut<Dummies>,
     dummies_query: Query<&Dummy>,
 ) {

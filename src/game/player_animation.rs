@@ -23,7 +23,7 @@ use crate::screen::Screen;
 
 use super::{
     assets::{AnimationKey, HandleMap},
-    dummies::slicing::SlicedEvent,
+    dummies::slicing::SliceEvent,
     spawn::player::Player,
 };
 
@@ -167,7 +167,7 @@ pub fn find_child_with_name_containing(
 
 // TODO With<Player>, .. But only the scene root has the Player marker, not the animation player entity
 fn play_slash_animation(
-    _trigger: Trigger<SlicedEvent>,
+    _trigger: Trigger<SliceEvent>,
     animations: Res<PlayerAnimations>,
     mut players_query: Query<(Entity, &mut AnimationPlayer, &mut AnimationTransitions)>,
 ) {
@@ -180,12 +180,12 @@ fn play_slash_animation(
                 Duration::from_millis(50),
             )
             .set_speed(2.5);
-        // TODO Delay before slice to wait for the animation to finish
+        // TODO Getting the animation duration here would be great
     }
 }
 
 fn look_towards_sliced_dummy(
-    trigger: Trigger<SlicedEvent>,
+    trigger: Trigger<SliceEvent>,
     mut players_query: Query<&mut Transform, With<Player>>,
     transforms: Query<&mut Transform, Without<Player>>,
 ) {
