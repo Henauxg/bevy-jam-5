@@ -6,7 +6,6 @@ use bevy::{
     core::Name,
     gltf::Gltf,
     input::ButtonInput,
-    log::info,
     math::{Vec3, Vec3A},
     pbr::{PbrBundle, StandardMaterial},
     prelude::{
@@ -32,7 +31,8 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();
-    app.register_type::<SliceEvent>();
+    app.register_type::<SliceAttemptEvent>();
+    app.register_type::<SlicedEvent>();
     app.register_type::<SlicerState>();
 
     app.add_systems(
@@ -45,6 +45,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<SlicerState>();
 
     app.observe(slice);
+    app.observe(fragment_entity);
 }
 
 #[derive(Component, Debug, Clone, PartialEq, Eq, Default, Reflect)]
@@ -63,10 +64,25 @@ impl SlicedFragment {
 }
 
 #[derive(Event, Debug, Clone, Reflect)]
-pub struct SliceEvent {
+/// May not slice the entity, depending on the positions
+pub struct SliceAttemptEvent {
     pub begin: Vec3,
     pub end: Vec3,
     pub entity: Entity,
+}
+
+#[derive(Event, Debug, Clone, Reflect)]
+/// An entity has been sliced
+pub struct SlicedEvent {
+    pub entity: Entity,
+}
+
+#[derive(Event, Debug, Clone, Reflect)]
+struct SpawnFragments {
+    sliced_entity: Entity,
+    sliced_transform: Transform,
+    mesh_fragments: [Mesh; 2],
+    slice_start_pos: Vec3,
 }
 
 #[derive(Resource, Debug, Clone, Default, Reflect)]
@@ -156,7 +172,7 @@ fn detect_slices(
     } else {
         match *slicer_state {
             SlicerState::Slicing { start, last_hit } => {
-                let slice_event = SliceEvent {
+                let slice_event = SliceAttemptEvent {
                     begin: start.0,
                     end: last_hit,
                     entity: start.1,
@@ -170,17 +186,15 @@ fn detect_slices(
 }
 
 fn slice(
-    trigger: Trigger<SliceEvent>,
+    trigger: Trigger<SliceAttemptEvent>,
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+
     cameras: Query<&mut Transform, With<Camera>>,
     sliceables: Query<
         (&Transform, &GlobalTransform, &Handle<Mesh>),
         (With<Sliceable>, Without<Camera>),
     >,
-    mut meshes_assets: ResMut<Assets<Mesh>>,
-    gltf_handles: Res<HandleMap<GltfKey>>,
-    assets_gltf: Res<Assets<Gltf>>,
+    meshes_assets: Res<Assets<Mesh>>,
 ) {
     let camera_tranform = cameras.single();
     let slice = trigger.event();
@@ -198,10 +212,7 @@ fn slice(
 
         let plane = Plane::new(local_begin, (local_qr.cross(local_qs).normalize()).into());
 
-        // let optional_mesh_fragments =;
         if let Some(mesh_fragments) = slice_bevy_mesh(plane, mesh) {
-            commands.entity(slice.entity).despawn();
-
             // commands.spawn((
             //     PbrBundle {
             //         mesh: meshes_assets.add(Plane3d::new(qr.cross(qs))),
@@ -211,34 +222,38 @@ fn slice(
             //     },
             //     SliceableObject,
             // ));
-
-            spawn_fragments(
-                &mesh_fragments,
-                &mut materials,
-                &mut meshes_assets,
-                &mut commands,
-                transform.translation,
-                local_begin,
-                &gltf_handles,
-                &assets_gltf,
-            );
+            // Let other systems react to the slice event with a valid entity
+            commands.trigger(SlicedEvent {
+                entity: slice.entity,
+            });
+            // Then despawn it
+            commands.trigger(SpawnFragments {
+                sliced_entity: slice.entity,
+                slice_start_pos: slice.begin,
+                sliced_transform: transform.clone(),
+                mesh_fragments,
+            });
         }
     }
 }
 
-pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 18000.;
+/// Impulse to force the fragments appart, more satisfying
+pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 3000.;
 
-fn spawn_fragments(
-    mesh_fragments: &[Mesh],
-    _materials: &mut ResMut<Assets<StandardMaterial>>,
-    meshes_assets: &mut ResMut<Assets<Mesh>>,
-    commands: &mut Commands,
-    sliced_mesh_pos: Vec3,
-    slice_plane_point: Vec3A,
-    // TODO Temporary
-    gltf_handles: &Res<HandleMap<GltfKey>>,
-    assets_gltf: &Res<Assets<Gltf>>,
+fn fragment_entity(
+    trigger: Trigger<SpawnFragments>,
+    mut commands: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut meshes_assets: ResMut<Assets<Mesh>>,
+    gltf_handles: Res<HandleMap<GltfKey>>,
+    assets_gltf: Res<Assets<Gltf>>,
 ) {
+    let fragments_info = trigger.event();
+
+    // Despawn the fragmented entity
+    commands.entity(fragments_info.sliced_entity).despawn();
+
+    // Spawn the fragments
     let gltf_handle = &gltf_handles[&GltfKey::Dummy];
     let Some(gltf) = assets_gltf.get(gltf_handle) else {
         return;
@@ -247,10 +262,10 @@ fn spawn_fragments(
     //     return;
     // };
     // let mesh_handle = &gltf_mesh.primitives[0].mesh;
-    // TODO Get mat handle from sliced entity
+    // TODO Get the mat handle from the sliced entity
     let mat_handle = &gltf.materials[0];
 
-    for mesh in mesh_fragments {
+    for mesh in fragments_info.mesh_fragments.iter() {
         let Some(collider) = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull)
         else {
             continue;
@@ -265,8 +280,10 @@ fn spawn_fragments(
                 StateScoped(Screen::Playing),
                 PbrBundle {
                     mesh: mesh_handle.clone(),
-                    transform: Transform::from_translation(sliced_mesh_pos)
-                        .with_scale(Vec3::splat(ASSETS_SCALE)), // TODO Retrive scale of the sliced entity
+                    transform: Transform::from_translation(
+                        fragments_info.sliced_transform.translation,
+                    )
+                    .with_scale(Vec3::splat(ASSETS_SCALE)), // TODO Retrive scale of the sliced entity
                     // material: materials.add(Color::srgb_u8(124, 144, 255)),
                     material: mat_handle.clone(),
                     ..default()
@@ -287,9 +304,9 @@ fn spawn_fragments(
                 SlicedFragment::new(),
             ))
             .id();
-        let frag_center = aabb.center;
-        let impulse = (FRAGMENT_INITIAL_IMPULSE_FACTOR * (frag_center - slice_plane_point)).into();
-        info!("Impulse is {}", impulse);
+        let frag_center: Vec3 = aabb.center.into();
+        let impulse =
+            FRAGMENT_INITIAL_IMPULSE_FACTOR * (frag_center - fragments_info.slice_start_pos);
         commands.entity(frag_entity).insert(ExternalImpulse {
             impulse,
             torque_impulse: Vec3::ZERO,

@@ -23,7 +23,7 @@ use crate::{
     screen::Screen,
 };
 
-use super::slicing::SliceEvent;
+use super::slicing::SlicedEvent;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Dummies>();
@@ -102,7 +102,7 @@ pub fn setup_dummies_mode_data(
 }
 
 pub fn free_dummy_slot(
-    trigger: Trigger<SliceEvent>,
+    trigger: Trigger<SlicedEvent>,
     mut dummies: ResMut<Dummies>,
     dummies_query: Query<&Dummy>,
 ) {
@@ -122,10 +122,10 @@ pub fn spawn_dummies(
 ) {
     dummies.spawn_timer.tick(time.delta());
 
-    // TODO Incorrect sub
+    let occupied_dummy_slots_count = dummies.dummy_slots.len() - dummies.free_slot_indexes.len();
     if dummies.spawn_timer.finished()
         && dummies.free_slot_indexes.len() > 0
-        && dummies.dummy_slots.len() - dummies.free_slot_indexes.len() < dummies.max_dummy_count
+        && occupied_dummy_slots_count < dummies.max_dummy_count
     {
         let mut rng = rand::thread_rng();
         let random_index = rng.gen_range(0..dummies.free_slot_indexes.len());
