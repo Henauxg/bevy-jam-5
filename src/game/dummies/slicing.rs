@@ -84,9 +84,9 @@ pub struct SliceEvent {
 #[derive(Event, Debug, Clone, Reflect)]
 struct SpawnFragments {
     sliced_entity: Entity,
-    sliced_transform: Transform,
-    mesh_fragments: [Mesh; 2],
-    slice_start_pos: Vec3,
+    sliced_object_transform: Transform,
+    slice_positions: (Vec3, Vec3),
+    fragments_meshes: [Mesh; 2],
 }
 
 #[derive(Resource, Default, Reflect)]
@@ -240,9 +240,9 @@ fn slice(
             // Queue it to be despawned and fragmented
             let fragments_spawn = SpawnFragments {
                 sliced_entity: slice.entity,
-                slice_start_pos: slice.begin,
-                sliced_transform: transform.clone(),
-                mesh_fragments,
+                slice_positions: (slice.begin, slice.end),
+                sliced_object_transform: transform.clone(),
+                fragments_meshes: mesh_fragments,
             };
             fragmentation_queue.queue.push((
                 fragments_spawn,
@@ -275,7 +275,9 @@ fn dequeue_fragmentations(
 }
 
 /// Impulse to force the fragments appart, more satisfying
-pub const FRAGMENT_INITIAL_IMPULSE_FACTOR: f32 = 3000.;
+pub const FRAGMENTS_SEPARATION_IMPULSE_FACTOR: f32 = 2500.; // 3000
+pub const FRAGMENTS_SLICE_DIRECTION_IMPULSE_FACTOR: f32 = 225000.;
+pub const FRAGMENTS_TORQUE_IMPULSE_FACTOR: f32 = 150000000.;
 
 fn fragment_entity(
     trigger: Trigger<SpawnFragments>,
@@ -302,7 +304,7 @@ fn fragment_entity(
     // TODO Get the mat handle from the sliced entity
     let mat_handle = &gltf.materials[0];
 
-    for mesh in fragments_info.mesh_fragments.iter() {
+    for mesh in fragments_info.fragments_meshes.iter() {
         let Some(collider) = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull)
         else {
             continue;
@@ -318,18 +320,15 @@ fn fragment_entity(
                 PbrBundle {
                     mesh: mesh_handle.clone(),
                     transform: Transform::from_translation(
-                        fragments_info.sliced_transform.translation,
+                        fragments_info.sliced_object_transform.translation,
                     )
                     .with_scale(Vec3::splat(ASSETS_SCALE)), // TODO Retrive scale of the sliced entity
                     // material: materials.add(Color::srgb_u8(124, 144, 255)),
                     material: mat_handle.clone(),
                     ..default()
                 },
+                // TODO May make it sliceable again
                 // Sliceable,
-                // Wireframe,
-                // WireframeColor {
-                //     color: Color::Srgba(GREEN),
-                // },
                 // Physics
                 RigidBody::Dynamic,
                 collider,
@@ -341,12 +340,27 @@ fn fragment_entity(
                 SlicedFragment::new(),
             ))
             .id();
+
         let frag_center: Vec3 = aabb.center.into();
-        let impulse =
-            FRAGMENT_INITIAL_IMPULSE_FACTOR * (frag_center - fragments_info.slice_start_pos);
+        let separating_impulse =
+            FRAGMENTS_SEPARATION_IMPULSE_FACTOR * (frag_center - fragments_info.slice_positions.0);
+
+        let slice_direction =
+            (fragments_info.slice_positions.1 - fragments_info.slice_positions.0).normalize();
+        let slice_direction_impulse = slice_direction * FRAGMENTS_SLICE_DIRECTION_IMPULSE_FACTOR;
+
+        // let torque_impulse = (fragments_info.slice_positions.0 - DEFAULT_GLADIATOR_POS).normalize()
+        //     * FRAGMENTS_TORQUE_IMPULSE_FACTOR;
+        // fragments_info.sliced_object_transform.right();
+
+        // let dummy_vector = (fragments_info.slice_positions.0 - DEFAULT_GLADIATOR_POS).normalize();
+
+        let torque_impulse =
+            fragments_info.sliced_object_transform.right() * FRAGMENTS_TORQUE_IMPULSE_FACTOR;
+
         commands.entity(frag_entity).insert(ExternalImpulse {
-            impulse,
-            torque_impulse: Vec3::ZERO,
+            impulse: separating_impulse + slice_direction_impulse,
+            torque_impulse,
         });
     }
 }
