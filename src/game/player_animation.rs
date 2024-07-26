@@ -16,6 +16,7 @@ pub(super) fn plugin(app: &mut App) {
         (attach_player_animations, attach_equipments, return_to_idle),
     );
     app.observe(play_slash_animation);
+    app.observe(look_towards_sliced_dummy);
 }
 
 use crate::screen::Screen;
@@ -179,8 +180,22 @@ fn play_slash_animation(
                 Duration::from_millis(50),
             )
             .set_speed(2.5);
-
         // TODO Delay before slice to wait for the animation to finish
+    }
+}
+
+fn look_towards_sliced_dummy(
+    trigger: Trigger<SlicedEvent>,
+    mut players_query: Query<&mut Transform, With<Player>>,
+    transforms: Query<&mut Transform, Without<Player>>,
+) {
+    let sliced_entity = trigger.event().entity;
+    let Ok(sliced_pos) = transforms.get(sliced_entity) else {
+        return;
+    };
+
+    for mut transform in players_query.iter_mut() {
+        transform.look_at(sliced_pos.translation, Vec3::Y);
     }
 }
 
