@@ -103,12 +103,23 @@ fn spawn_arena(
         Restitution::coefficient(0.0),
     ));
 
+    commands.spawn((
+        Name::new("Ground details"),
+        StateScoped(Screen::Playing),
+        SceneBundle {
+            scene: scenes_handles[&SceneKey::GroundDetails].clone_weak(),
+            transform: Transform::from_translation(Vec3::ZERO)
+                .with_scale(Vec3::splat(ASSETS_SCALE)),
+            ..default()
+        },
+    ));
+
     // Arena
     commands.spawn((
         Name::new("Arena"),
         StateScoped(Screen::Playing),
         SceneBundle {
-            scene: scenes_handles[&SceneKey::Bleacher].clone_weak(),
+            scene: scenes_handles[&SceneKey::Arena].clone_weak(),
             transform: Transform::from_translation(Vec3::ZERO)
                 // .looking_at(spawn_info.looking_at, Vec3::Y)
                 .with_scale(Vec3::splat(ASSETS_SCALE)),

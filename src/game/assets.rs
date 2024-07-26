@@ -126,7 +126,8 @@ pub enum SceneKey {
     Gladiator,
     Sword,
     Dummy,
-    Bleacher,
+    Arena,
+    GroundDetails,
 }
 
 impl AssetKey for SceneKey {
@@ -151,8 +152,12 @@ impl FromWorld for HandleMap<SceneKey> {
                 asset_server.load("models/sword.glb#Scene0"),
             ),
             (
-                SceneKey::Bleacher,
-                asset_server.load("models/bleacher.glb#Scene0"),
+                SceneKey::Arena,
+                asset_server.load("models/arena.glb#Scene0"),
+            ),
+            (
+                SceneKey::GroundDetails,
+                asset_server.load("models/ground.glb#Scene0"),
             ),
         ]
         .into()
