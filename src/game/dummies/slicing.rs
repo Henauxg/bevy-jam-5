@@ -319,11 +319,8 @@ fn fragment_entity(
                 StateScoped(Screen::Playing),
                 PbrBundle {
                     mesh: mesh_handle.clone(),
-                    transform: Transform::from_translation(
-                        fragments_info.sliced_object_transform.translation,
-                    )
-                    .with_scale(Vec3::splat(ASSETS_SCALE)), // TODO Retrive scale of the sliced entity
-                    // material: materials.add(Color::srgb_u8(124, 144, 255)),
+                    transform: Transform::from(fragments_info.sliced_object_transform),
+
                     material: mat_handle.clone(),
                     ..default()
                 },
