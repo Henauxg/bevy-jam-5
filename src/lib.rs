@@ -93,7 +93,7 @@ enum AppSet {
 
 fn spawn_camera(mut commands: Commands) {
     // Camera
-    let camera_position = Vec3::new(0., 1.5, -5.);
+    let camera_position = Vec3::new(0., 2., -10.);
     let look_target = Vec3::ZERO;
     commands.spawn((
         // Render all UI to this camera.
@@ -110,11 +110,11 @@ fn spawn_camera(mut commands: Commands) {
                 ..default()
             },
             state: PanOrbitState {
-                center: Vec3::new(-0.2976082, 0.45186156, 0.6121746),
-                radius: 5.379136,
+                center: Vec3::ZERO,
+                radius: 12.,
                 upside_down: false,
-                pitch: -0.28798094,
-                yaw: -2.6529098,
+                pitch: -0.6527581,
+                yaw: -2.9827762,
                 ..Default::default()
             },
             settings: PanOrbitSettings {
