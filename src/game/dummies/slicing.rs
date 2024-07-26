@@ -29,7 +29,7 @@ use crate::{
     AppSet,
 };
 
-pub const PLAYER_SLICE_FRAGMENTATION_DELAY_MS: u64 = 250;
+pub const PLAYER_SLICE_FRAGMENTATION_DELAY_MS: u64 = 90;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();

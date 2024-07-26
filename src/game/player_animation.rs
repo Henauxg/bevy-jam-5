@@ -30,6 +30,8 @@ use super::{
 pub const RIGHT_HAND_SLOT: &str = "EquipmentHandle.R";
 pub const LEFT_HAND_SLOT: &str = "EquipmentHandle.L";
 
+pub const PLAYER_SLASH_ANIMATION_SPEED: f32 = 3.2;
+
 #[derive(Resource)]
 pub struct PlayerAnimations {
     _walk_anim: AnimationNodeIndex,
@@ -179,7 +181,7 @@ fn play_slash_animation(
                 animations.slash_anim,
                 Duration::from_millis(50),
             )
-            .set_speed(2.5);
+            .set_speed(PLAYER_SLASH_ANIMATION_SPEED);
         // TODO Getting the animation duration here would be great
     }
 }
