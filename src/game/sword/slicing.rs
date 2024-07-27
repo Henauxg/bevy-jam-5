@@ -35,6 +35,7 @@ use crate::{
 pub const PLAYER_SLICE_FRAGMENTATION_DELAY_MS: u64 = 85;
 pub const SLICED_FRAGMENTS_SHATTER_DELAY_MS: u64 = 2000;
 pub const SHARDS_DESPAWN_DELAY_MS: u64 = 3000;
+pub const SHATTER_ITERATION_COUNT: u32 = 5;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();
@@ -423,7 +424,7 @@ fn shatter_entity(
     //     })
     //     .id();
 
-    let shards = slice_bevy_mesh_iterative(mesh_to_shatter, 4, None);
+    let shards = slice_bevy_mesh_iterative(mesh_to_shatter, SHATTER_ITERATION_COUNT, None);
     for shard_mesh in shards {
         let Some(collider) =
             Collider::from_bevy_mesh(&shard_mesh, &ComputedColliderShape::ConvexHull)

@@ -3,9 +3,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use super::Screen;
-use crate::game::{
-    arena::ArenaMode, dummies::spawning::StartDummiesMinigame, spawn::arena::SpawnArena,
-};
+use crate::game::{arena::ArenaMode, spawn::arena::SpawnArena};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Playing), enter_playing);
@@ -18,17 +16,18 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn enter_playing(mut commands: Commands) {
-    commands.init_resource::<ArenaMode>();
-    commands.trigger(StartDummiesMinigame);
+fn enter_playing(mut commands: Commands, mut next_arena_mode: ResMut<NextState<ArenaMode>>) {
     commands.trigger(SpawnArena);
+
+    let random_arena_mode: ArenaMode = rand::random();
+    next_arena_mode.set(random_arena_mode);
+
     // commands.trigger(PlaySoundtrack::Key(SoundtrackKey::Gameplay));
 }
 
-fn exit_playing(mut commands: Commands) {
+fn exit_playing(mut _commands: Commands) {
     // We could use [`StateScoped`] on the sound playing entities instead.
     // commands.trigger(PlaySoundtrack::Disable);
-    commands.remove_resource::<ArenaMode>();
 }
 
 fn return_to_title_screen(mut next_screen: ResMut<NextState<Screen>>) {

@@ -6,7 +6,7 @@ use bevy_rapier3d::prelude::{
 use crate::{
     game::{
         assets::{GltfKey, HandleMap, ASSETS_SCALE},
-        dummies::slicing::Sliceable,
+        sword::slicing::Sliceable,
     },
     screen::Screen,
 };

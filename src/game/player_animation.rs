@@ -23,8 +23,8 @@ use crate::screen::Screen;
 
 use super::{
     assets::{AnimationKey, HandleMap},
-    dummies::slicing::SliceEvent,
     spawn::player::Player,
+    sword::slicing::SliceEvent,
 };
 
 pub const RIGHT_HAND_SLOT: &str = "EquipmentHandle.R";

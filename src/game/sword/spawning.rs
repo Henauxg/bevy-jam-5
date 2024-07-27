@@ -6,39 +6,48 @@ use bevy::{
     ecs::component::StorageType,
     math::Vec3,
     prelude::{
-        in_state, Children, Commands, Component, Condition, Entity, Event, Gizmos,
-        IntoSystemConfigs, Query, Res, ResMut, Resource, Transform, Trigger, With, Without,
+        in_state, Children, Commands, Component, Entity, Event, Gizmos, IntoSystemConfigs, OnEnter,
+        OnExit, Query, Res, ResMut, Resource, StateScoped, Transform, Trigger, With, Without,
     },
     reflect::Reflect,
     time::{Time, Timer, TimerMode},
 };
 use rand::Rng;
 
-use crate::{
-    game::{
-        arena::{arena_is_in_dummies_mode, ArenaMode},
-        spawn::dummy::{Dummy, SpawnDummy},
+use crate::game::{
+    arena::ArenaMode,
+    spawn::{
+        dummy::{Dummy, SpawnDummy},
+        sword::SpawnSword,
     },
-    screen::Screen,
 };
 
 use super::slicing::SliceEvent;
 
+pub const DUMMY_POSITIONS: [Vec3; 5] = [
+    Vec3::new(3., 0., 0.),
+    Vec3::new(1.5, 0., 0.75),
+    Vec3::new(0., 0., 1.5),
+    Vec3::new(-1.5, 0., 0.75),
+    Vec3::new(-3., 0., 0.),
+];
+
 pub const DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS: u64 = 3000;
+pub const DUMMIES_SPAWN_TIMER_MS: u64 = 1500;
+pub const MAX_DUMMIES_COUNT: usize = 3;
 
 pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<DummiesData>();
     app.register_type::<DummiesData>();
 
+    app.add_systems(OnEnter(ArenaMode::Sword), on_enter_sword_mode);
+    app.add_systems(OnExit(ArenaMode::Sword), on_exit_sword_mode);
     app.add_systems(
         Update,
-        (free_dummy_slots, spawn_dummies)
-            .run_if(in_state(Screen::Playing).and_then(arena_is_in_dummies_mode)),
+        (free_dummy_slots, spawn_dummies).run_if(in_state(ArenaMode::Sword)),
     );
 
     app.observe(spawn_dummy_slots);
     app.observe(queue_dummy_slot_free);
-    app.observe(setup_dummies_mode_data);
 }
 
 #[derive(Resource, Default, Reflect)]
@@ -62,47 +71,50 @@ impl Component for DummySlot {
             dummies.free_slot_indexes.push(slot_count);
             dummies.dummy_slots.push(entity);
         });
-        hooks.on_remove(|mut world, entity, _comp_id| {
-            let slots = &world.resource_mut::<DummiesData>().dummy_slots;
-            let Some(slot_index) = slots.iter().position(|slot| *slot == entity) else {
-                return;
-            };
-            world
-                .resource_mut::<DummiesData>()
-                .dummy_slots
-                .swap_remove(slot_index);
-        });
+        // TODO Not needed, Would also need to update free_slot_indexes and slot_indexes_to_free
+        // hooks.on_remove(|mut world, entity, _comp_id| {
+        //     let slots = &world.resource_mut::<DummiesData>().dummy_slots;
+        //     let Some(slot_index) = slots.iter().position(|slot| *slot == entity) else {
+        //         return;
+        //     };
+        //     world
+        //         .resource_mut::<DummiesData>()
+        //         .dummy_slots
+        //         .swap_remove(slot_index);
+        // });
     }
 }
 
-pub const DUMMY_POSITIONS: [Vec3; 5] = [
-    Vec3::new(3., 0., 0.),
-    Vec3::new(1.5, 0., 0.75),
-    Vec3::new(0., 0., 1.5),
-    Vec3::new(-1.5, 0., 0.75),
-    Vec3::new(-3., 0., 0.),
-];
+pub fn on_enter_sword_mode(mut commands: Commands) {
+    commands.insert_resource({
+        DummiesData {
+            spawn_timer: Timer::new(
+                Duration::from_millis(DUMMIES_SPAWN_TIMER_MS),
+                TimerMode::Once,
+            ),
+            max_dummy_count: MAX_DUMMIES_COUNT,
+            ..Default::default()
+        }
+    });
+    commands.trigger(SpawnSword);
+    commands.trigger(SpawnDummySlots);
+}
+
+pub fn on_exit_sword_mode(mut commands: Commands) {
+    commands.remove_resource::<DummiesData>();
+}
 
 #[derive(Event, Debug)]
 pub struct SpawnDummySlots;
 
 pub fn spawn_dummy_slots(_trigger: Trigger<SpawnDummySlots>, mut commands: Commands) {
     for pos in DUMMY_POSITIONS.iter() {
-        commands.spawn((DummySlot, Transform::from_translation(*pos)));
+        commands.spawn((
+            StateScoped(ArenaMode::Sword),
+            DummySlot,
+            Transform::from_translation(*pos),
+        ));
     }
-}
-
-#[derive(Event, Debug)]
-pub struct StartDummiesMinigame;
-
-pub fn setup_dummies_mode_data(
-    _trigger: Trigger<StartDummiesMinigame>,
-    mut dummies: ResMut<DummiesData>,
-    mut arena_mode: ResMut<ArenaMode>,
-) {
-    dummies.spawn_timer = Timer::new(Duration::from_millis(1500), TimerMode::Once);
-    dummies.max_dummy_count = 3;
-    *arena_mode = ArenaMode::Dummies;
 }
 
 pub fn queue_dummy_slot_free(
@@ -168,14 +180,17 @@ pub fn spawn_dummies(
 
 pub fn debug_draw_dummy_slots(
     mut gizmos: Gizmos,
-    dummies: Res<DummiesData>,
+    dummies: Option<Res<DummiesData>>,
     dummy_slots: Query<&Transform, With<DummySlot>>,
 ) {
-    for (slot_index, &slot_entity) in dummies.dummy_slots.iter().enumerate() {
+    let Some(dummies_data) = dummies else {
+        return;
+    };
+    for (slot_index, &slot_entity) in dummies_data.dummy_slots.iter().enumerate() {
         let Ok(slot_transform) = dummy_slots.get(slot_entity) else {
             continue;
         };
-        let color = if dummies.free_slot_indexes.contains(&slot_index) {
+        let color = if dummies_data.free_slot_indexes.contains(&slot_index) {
             GREEN
         } else {
             RED

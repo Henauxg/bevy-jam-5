@@ -11,12 +11,12 @@ use bevy_rapier3d::prelude::{ActiveCollisionTypes, Collider, Friction, Restituti
 use crate::{
     game::{
         assets::{HandleMap, SceneKey, ASSETS_SCALE},
-        dummies::spawning::SpawnDummySlots,
+        sword::spawning::SpawnDummySlots,
     },
     screen::Screen,
 };
 
-use super::{player::SpawnPlayer, sword::SpawnSword};
+use super::player::SpawnPlayer;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_arena);
@@ -38,9 +38,6 @@ fn spawn_arena(
         pos: DEFAULT_GLADIATOR_POS,
         looking_at: Vec3::ZERO,
     });
-    commands.trigger(SpawnSword);
-
-    commands.trigger(SpawnDummySlots);
 
     // Scene lights
     commands.insert_resource(AmbientLight {
