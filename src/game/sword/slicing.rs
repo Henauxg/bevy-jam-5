@@ -89,6 +89,7 @@ struct SliceAttemptEvent {
 /// An entity is being sliced
 pub struct SliceEvent {
     pub entity: Entity,
+    pub pos: Vec3,
 }
 
 #[derive(Event, Debug, Clone, Reflect)]
@@ -249,6 +250,7 @@ fn slice(
             // Let other systems react to the slice event with a valid entity
             commands.trigger(SliceEvent {
                 entity: slice.entity,
+                pos: transform.translation,
             });
             // Set it as non sliceable
             commands.entity(slice.entity).remove::<Sliceable>();
@@ -435,32 +437,31 @@ fn shatter_entity(
         //     continue;
         // };
         let mesh_handle = meshes_assets.add(shard_mesh.clone());
-        let shard_entity = commands
-            .spawn((
-                Name::new("Shard"),
-                StateScoped(Screen::Playing),
-                PbrBundle {
-                    mesh: mesh_handle.clone(),
-                    transform: Transform::from(*transform),
-                    material: mat_handle.clone(),
-                    ..default()
-                },
-                // Physics
-                RigidBody::Dynamic,
-                collider,
-                ActiveCollisionTypes::default(),
-                Friction::coefficient(0.7),
-                Restitution::coefficient(0.05),
-                ColliderMassProperties::Density(2.0),
-                // Logic
-                Shard {
-                    despawn_timer: Timer::new(
-                        Duration::from_millis(SHARDS_DESPAWN_DELAY_MS),
-                        TimerMode::Once,
-                    ),
-                },
-            ))
-            .id();
+        //   let shard_entity =
+        commands.spawn((
+            Name::new("Shard"),
+            StateScoped(Screen::Playing),
+            PbrBundle {
+                mesh: mesh_handle.clone(),
+                transform: Transform::from(*transform),
+                material: mat_handle.clone(),
+                ..default()
+            },
+            // Physics
+            RigidBody::Dynamic,
+            collider,
+            ActiveCollisionTypes::default(),
+            Friction::coefficient(0.7),
+            Restitution::coefficient(0.05),
+            ColliderMassProperties::Density(2.0),
+            // Logic
+            Shard {
+                despawn_timer: Timer::new(
+                    Duration::from_millis(SHARDS_DESPAWN_DELAY_MS),
+                    TimerMode::Once,
+                ),
+            },
+        ));
 
         // commands.entity(shards_parent).add_child(shard_entity);
 

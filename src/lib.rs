@@ -9,8 +9,10 @@ use bevy::{
     audio::{AudioPlugin, Volume},
     prelude::*,
 };
+use bevy_mod_billboard::plugin::BillboardPlugin;
 use bevy_mod_raycast::cursor::CursorRayPlugin;
 use bevy_rapier3d::plugin::{NoUserData, RapierPhysicsPlugin};
+use bevy_tweening::TweeningPlugin;
 use game::camera::{PanOrbitCameraBundle, PanOrbitSettings, PanOrbitState};
 
 pub struct AppPlugin;
@@ -59,6 +61,8 @@ impl Plugin for AppPlugin {
         app.add_plugins((
             CursorRayPlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
+            BillboardPlugin,
+            TweeningPlugin,
         ));
         app.add_plugins((game::plugin, screen::plugin, ui::plugin));
 

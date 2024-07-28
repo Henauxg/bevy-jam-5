@@ -24,10 +24,10 @@ log = { version = "0.4", features = [
 rand = "0.8"
 bevy_mod_raycast = "0.18.0"
 bevy_rapier3d = "0.27.0"
+bevy_mod_billboard = "0.7.0"
+bevy_tweening = { version = "0.11.0", features = ["bevy_text"] }
 
-# TODO Remove
-bevy-inspector-egui = "0.25.1"
-
+# bevy-inspector-egui = "0.25.1"
 
 [features]
 default = [

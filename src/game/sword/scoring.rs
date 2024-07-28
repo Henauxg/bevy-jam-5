@@ -23,7 +23,11 @@ pub fn update_score(
     let slice_info = trigger.event();
 
     if let Ok(_dummy) = dummies_query.get(slice_info.entity) {
-        commands.trigger(ScoreAction(ScoreActionType::Good))
+        commands.trigger(ScoreAction {
+            action: ScoreActionType::Good,
+            pos: slice_info.pos,
+        });
+
         //TODO != ScoreActionType based on the dummy data
     }
 }

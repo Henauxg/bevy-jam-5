@@ -56,6 +56,8 @@ impl FromWorld for HandleMap<ImageKey> {
     }
 }
 
+pub const DEFAULT_FONT_KEY: FontKey = FontKey::RomanSD;
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum FontKey {
     Augustus,

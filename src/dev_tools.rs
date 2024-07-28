@@ -3,7 +3,7 @@
 use bevy::{
     dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*,
 };
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+// use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 use crate::{
     game::{
@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(WorldInspectorPlugin::new());
+    // app.add_plugins(WorldInspectorPlugin::new());
 
     app.add_systems(
         Update,

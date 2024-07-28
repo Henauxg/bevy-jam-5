@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use super::Screen;
 use crate::{
     game::{
-        assets::{FontKey, HandleMap},
+        assets::{FontKey, HandleMap, DEFAULT_FONT_KEY},
         camera::{PanOrbitSettings, PanOrbitState},
     },
     ui::prelude::*,
@@ -37,7 +37,7 @@ fn enter_title(
     font_handles: Res<HandleMap<FontKey>>,
     mut camera_query: Query<(&mut PanOrbitState, &mut PanOrbitSettings)>,
 ) {
-    let font = font_handles.get(&FontKey::RomanSD).unwrap().clone();
+    let font = font_handles.get(&DEFAULT_FONT_KEY).unwrap().clone();
     // Seems to need additonal setings. Spacing is not right
     // let new_default_font = fonts
     //     .get(font_handles.get(&FontKey::Augustus).unwrap())

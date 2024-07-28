@@ -1,17 +1,27 @@
+use std::time::Duration;
+
 use crate::screen::Screen;
 use crate::ui::prelude::*;
 use bevy::{
     app::{App, Update},
+    color::{palettes::css::ORANGE, Alpha, Color},
+    math::Vec3,
     prelude::{
-        in_state, BuildChildren, Commands, Component, Event, IntoSystemConfigs, OnEnter, ParamSet,
-        Query, Res, ResMut, Resource, StateScoped, Trigger, With,
+        in_state, BuildChildren, Commands, Component, DespawnRecursiveExt, Entity, Event,
+        IntoSystemConfigs, OnEnter, ParamSet, Query, Res, ResMut, Resource, StateScoped, Transform,
+        Trigger, With,
     },
     reflect::Reflect,
-    text::Text,
-    time::Time,
+    text::{Text, TextSection, TextStyle},
+    time::{Time, Timer, TimerMode},
+};
+use bevy_mod_billboard::BillboardTextBundle;
+use bevy_tweening::{
+    lens::{TextColorLens, TransformPositionLens},
+    Animator, EaseFunction, Tween,
 };
 
-use super::assets::{FontKey, HandleMap};
+use super::assets::{FontKey, HandleMap, DEFAULT_FONT_KEY};
 
 pub const DEFAULT_BAD_ACTION_SCORE: f32 = -5.;
 pub const DEFAULT_GOOD_ACTION_SCORE: f32 = 10.;
@@ -20,6 +30,12 @@ pub const DEFAULT_PERFECT_ACTION_SCORE: f32 = 15.;
 pub const INITIAL_DIFFICULTY_FACTOR: f32 = 1.;
 pub const MAX_DIFFICULTY_FACTOR: f32 = 2.;
 pub const DIFFICULTY_FACTOR_PER_SEC: f32 = 0.01;
+
+pub const SCORE_BILLBOARDS_TEXT_DURATION_MS: u64 = 1750;
+pub const SCORE_BILLBOARD_TEXT_COLOR: Color = Color::Srgba(ORANGE);
+pub const SCORE_BILLBOARDS_TEXT_SIZE: f32 = 60.0;
+pub const SCORE_BILLBOARDS_FROM_DELTA: f32 = 2.5;
+pub const SCORE_BILLBOARDS_TO_DELTA: f32 = 4.5;
 
 #[derive(Resource, Reflect, Clone)]
 pub struct Score {
@@ -38,9 +54,15 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(OnEnter(Screen::Playing), (setup_score_ui, setup_score));
 
-    app.add_systems(Update, update_difficulty.run_if(in_state(Screen::Playing)));
+    app.add_systems(
+        Update,
+        (
+            update_difficulty.run_if(in_state(Screen::Playing)),
+            despawn_score_billboards,
+        ),
+    );
 
-    app.observe(update_score);
+    app.observe(handle_score_actions);
     app.observe(update_score_ui);
 }
 
@@ -51,15 +73,21 @@ pub enum ScoreActionType {
     Perfect,
 }
 #[derive(Event, Clone, Reflect)]
-pub struct ScoreAction(pub ScoreActionType);
+pub struct ScoreAction {
+    pub action: ScoreActionType,
+    // Where it happened
+    pub pos: Vec3,
+}
 
-pub fn update_score(
+pub fn handle_score_actions(
     trigger: Trigger<ScoreAction>,
     mut commands: Commands,
     mut score: ResMut<Score>,
     difficulty: ResMut<Difficulty>,
+    font_handles: Res<HandleMap<FontKey>>,
 ) {
-    let score_action_value = match trigger.event().0 {
+    let score_action = &trigger.event();
+    let score_action_raw_value = match score_action.action {
         ScoreActionType::Bad => DEFAULT_BAD_ACTION_SCORE,
         ScoreActionType::Good => DEFAULT_GOOD_ACTION_SCORE,
         ScoreActionType::Perfect => DEFAULT_PERFECT_ACTION_SCORE,
@@ -67,19 +95,89 @@ pub fn update_score(
     let difficulty_factor = MAX_DIFFICULTY_FACTOR.min(
         INITIAL_DIFFICULTY_FACTOR + difficulty.time_elapsed_s as f32 * DIFFICULTY_FACTOR_PER_SEC,
     );
-    let score_value = if score_action_value > 0. {
-        score_action_value / difficulty_factor
+    let (rounded_action_value, action_text) = if score_action_raw_value > 0. {
+        let value = (score_action_raw_value / difficulty_factor) as i32;
+        (value, format!("+{}", value))
     } else {
-        score_action_value * difficulty_factor
+        let value = (score_action_raw_value * difficulty_factor) as i32;
+        (value, format!("-{}", value))
     };
 
-    score.current += score_value as i32;
+    score.current += rounded_action_value;
     if score.current > 0 && score.current as u32 > score.highscore {
         score.highscore = score.current as u32;
     }
 
+    let Some(font) = font_handles.get(&DEFAULT_FONT_KEY) else {
+        return;
+    };
+
+    // TODO Color from ActionType
+    let translate_up = Tween::new(
+        EaseFunction::QuarticOut,
+        Duration::from_millis(SCORE_BILLBOARDS_TEXT_DURATION_MS),
+        TransformPositionLens {
+            start: score_action.pos + SCORE_BILLBOARDS_FROM_DELTA * Vec3::Y,
+            end: score_action.pos + SCORE_BILLBOARDS_TO_DELTA * Vec3::Y,
+        },
+    );
+    let fade_color = Tween::new(
+        EaseFunction::QuarticOut,
+        Duration::from_millis(SCORE_BILLBOARDS_TEXT_DURATION_MS),
+        TextColorLens {
+            start: SCORE_BILLBOARD_TEXT_COLOR,
+            end: SCORE_BILLBOARD_TEXT_COLOR.with_alpha(0.),
+            section: 0,
+        },
+    );
+    commands.spawn((
+        StateScoped(Screen::Playing),
+        BillboardTextBundle {
+            transform: Transform::from_translation(score_action.pos + 2. * Vec3::Y)
+                .with_scale(Vec3::splat(0.0085)),
+            text: Text::from_sections([TextSection {
+                value: action_text,
+                style: TextStyle {
+                    font_size: SCORE_BILLBOARDS_TEXT_SIZE,
+                    font: font.clone_weak(),
+                    color: SCORE_BILLBOARD_TEXT_COLOR,
+                    ..Default::default()
+                },
+            }]),
+            // .with_alignment(TextAlignment::CENTER),
+            ..Default::default()
+        },
+        // Add an Animator component to control and execute the animation.
+        Animator::new(translate_up),
+        Animator::new(fade_color),
+        ScoreBillboard {
+            timer: Timer::new(
+                Duration::from_millis(SCORE_BILLBOARDS_TEXT_DURATION_MS),
+                TimerMode::Once,
+            ),
+        },
+    ));
+
     commands.trigger(ScoreUpdate);
     // TODO Difficulty/time
+}
+
+#[derive(Component)]
+pub struct ScoreBillboard {
+    timer: Timer,
+}
+
+fn despawn_score_billboards(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut score_billboards: Query<(Entity, &mut ScoreBillboard)>,
+) {
+    for (entity, mut billboard) in score_billboards.iter_mut() {
+        billboard.timer.tick(time.delta());
+        if billboard.timer.finished() {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
 }
 
 #[derive(Event, Clone, Reflect)]
