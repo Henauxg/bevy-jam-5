@@ -35,7 +35,7 @@ use crate::{
 pub const PLAYER_SLICE_FRAGMENTATION_DELAY_MS: u64 = 85;
 pub const SLICED_FRAGMENTS_SHATTER_DELAY_MS: u64 = 2000;
 pub const SHARDS_DESPAWN_DELAY_MS: u64 = 3000;
-pub const SHATTER_ITERATION_COUNT: u32 = 5;
+pub const SHATTER_ITERATION_COUNT: u32 = 6;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();

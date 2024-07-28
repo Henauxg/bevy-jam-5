@@ -25,16 +25,17 @@ use crate::game::{
 
 use super::slicing::SliceEvent;
 
-pub const DUMMY_POSITIONS: [Vec3; 5] = [
-    Vec3::new(3., 0., 0.),
-    Vec3::new(1.5, 0., 0.75),
-    Vec3::new(0., 0., 1.5),
-    Vec3::new(-1.5, 0., 0.75),
-    Vec3::new(-3., 0., 0.),
+pub const DUMMY_POSITIONS: [Vec3; 6] = [
+    Vec3::new(3.5, 0., 0.5),
+    Vec3::new(2.25, 0., 1.5),
+    Vec3::new(1., 0., 2.25),
+    Vec3::new(-1., 0., 2.25),
+    Vec3::new(-2.25, 0., 1.5),
+    Vec3::new(-3.5, 0., 0.5),
 ];
 
 pub const DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS: u64 = 3000;
-pub const DUMMIES_SPAWN_TIMER_MS: u64 = 1500;
+pub const DUMMIES_SPAWN_TIMER_MS: u64 = 1200;
 pub const MAX_DUMMIES_COUNT: usize = 3;
 
 pub(super) fn plugin(app: &mut App) {

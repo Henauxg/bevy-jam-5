@@ -3,7 +3,10 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use super::Screen;
 use crate::game::{
     arena::ArenaMode,
-    spawn::{arena::DEFAULT_GLADIATOR_POS, player::SpawnPlayer},
+    spawn::{
+        arena::{DEFAULT_GLADIATOR_LOOK_AT, DEFAULT_GLADIATOR_POS},
+        player::SpawnPlayer,
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -20,7 +23,7 @@ pub(super) fn plugin(app: &mut App) {
 fn enter_playing(mut commands: Commands, mut next_arena_mode: ResMut<NextState<ArenaMode>>) {
     commands.trigger(SpawnPlayer {
         pos: DEFAULT_GLADIATOR_POS,
-        looking_at: Vec3::ZERO,
+        looking_at: DEFAULT_GLADIATOR_LOOK_AT,
     });
 
     let random_arena_mode: ArenaMode = rand::random();
