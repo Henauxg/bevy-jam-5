@@ -2,25 +2,27 @@ use bevy::{
     app::App,
     prelude::{Commands, OnEnter, OnExit},
 };
+use camera::SetShieldModeCamera;
+use throwers::{SpawnJugThrowers, ThrowersData};
 
 use super::{arena::ArenaMode, spawn::shield::SpawnShield};
 
-// pub mod scoring
 pub mod camera;
-pub mod spawning;
+pub mod throwers;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((spawning::plugin, camera::plugin));
-    app.add_systems(OnEnter(ArenaMode::Shield), on_enter_sword_mode);
-    app.add_systems(OnExit(ArenaMode::Shield), on_exit_sword_mode);
+    app.add_plugins((camera::plugin, throwers::plugin));
+    app.add_systems(OnEnter(ArenaMode::Shield), on_enter_shield_mode);
+    app.add_systems(OnExit(ArenaMode::Shield), on_exit_shield_mode);
 }
 
-pub fn on_enter_sword_mode(mut commands: Commands) {
-    // commands.insert_resource(DummiesData::default());
+pub fn on_enter_shield_mode(mut commands: Commands) {
+    commands.insert_resource(ThrowersData::default());
     commands.trigger(SpawnShield);
-    // commands.trigger(SpawnDummySlots);
+    commands.trigger(SpawnJugThrowers);
+    commands.trigger(SetShieldModeCamera);
 }
 
-pub fn on_exit_sword_mode(mut commands: Commands) {
-    // commands.remove_resource::<DummiesData>();
+pub fn on_exit_shield_mode(mut commands: Commands) {
+    commands.remove_resource::<ThrowersData>();
 }

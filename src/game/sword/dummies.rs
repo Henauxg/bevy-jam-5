@@ -41,8 +41,8 @@ pub const MAX_DUMMIES_COUNT: usize = 3;
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<DummiesData>();
 
-    app.add_systems(OnEnter(ArenaMode::Sword), on_enter_sword_mode);
-    app.add_systems(OnExit(ArenaMode::Sword), on_exit_sword_mode);
+    // app.add_systems(OnEnter(ArenaMode::Sword), on_enter_sword_mode);
+    // app.add_systems(OnExit(ArenaMode::Sword), on_exit_sword_mode);
     app.add_systems(
         Update,
         (free_dummy_slots, spawn_dummies).run_if(in_state(ArenaMode::Sword)),
@@ -102,24 +102,22 @@ impl Component for DummySlot {
     }
 }
 
-pub fn on_enter_sword_mode(mut commands: Commands) {
-    commands.insert_resource({
-        DummiesData {
-            spawn_timer: Timer::new(
-                Duration::from_millis(DUMMIES_SPAWN_TIMER_MS),
-                TimerMode::Once,
-            ),
-            max_dummy_count: MAX_DUMMIES_COUNT,
-            ..Default::default()
-        }
-    });
-    commands.trigger(SpawnSword);
-    commands.trigger(SpawnDummySlots);
-}
+// pub fn on_enter_sword_mode(mut commands: Commands) {
+//     commands.insert_resource({
+//         DummiesData {
+//             spawn_timer: Timer::new(
+//                 Duration::from_millis(DUMMIES_SPAWN_TIMER_MS),
+//                 TimerMode::Once,
+//             ),
+//             max_dummy_count: MAX_DUMMIES_COUNT,
+//             ..Default::default()
+//         }
+//     });
+// }
 
-pub fn on_exit_sword_mode(mut commands: Commands) {
-    commands.remove_resource::<DummiesData>();
-}
+// pub fn on_exit_sword_mode(mut commands: Commands) {
+//     commands.remove_resource::<DummiesData>();
+// }
 
 #[derive(Event, Debug)]
 pub struct SpawnDummySlots;

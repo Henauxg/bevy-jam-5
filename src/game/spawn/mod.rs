@@ -7,6 +7,8 @@ use bevy::prelude::*;
 pub mod arena;
 pub mod dummy;
 pub mod helmet;
+pub mod jug;
+pub mod jug_thrower;
 pub mod player;
 pub mod shield;
 pub mod sword;
@@ -19,5 +21,7 @@ pub(super) fn plugin(app: &mut App) {
         shield::plugin,
         helmet::plugin,
         dummy::plugin,
+        jug_thrower::plugin,
+        jug::plugin,
     ));
 }

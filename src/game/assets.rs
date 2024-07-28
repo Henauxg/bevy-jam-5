@@ -1,16 +1,11 @@
-use bevy::{
-    gltf::GltfMesh,
-    prelude::*,
-    render::texture::{ImageLoaderSettings, ImageSampler},
-    utils::HashMap,
-};
+use bevy::{gltf::GltfMesh, prelude::*, utils::HashMap};
 use bevy_rapier3d::prelude::{Collider, ComputedColliderShape};
 
-use super::spawn::dummy::DummyCachedData;
+use super::spawn::{dummy::DummyCachedData, jug::JugCachedData};
 
 pub(super) fn plugin(app: &mut App) {
-    app.register_type::<HandleMap<ImageKey>>();
-    app.init_resource::<HandleMap<ImageKey>>();
+    // app.register_type::<HandleMap<ImageKey>>();
+    // app.init_resource::<HandleMap<ImageKey>>();
 
     app.register_type::<HandleMap<SfxKey>>();
     app.init_resource::<HandleMap<SfxKey>>();
@@ -31,30 +26,30 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<HandleMap<FontKey>>();
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
-pub enum ImageKey {
-    Ducky,
-}
+// #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+// pub enum ImageKey {
+//     Ducky,
+// }
 
-impl AssetKey for ImageKey {
-    type Asset = Image;
-}
+// impl AssetKey for ImageKey {
+//     type Asset = Image;
+// }
 
-impl FromWorld for HandleMap<ImageKey> {
-    fn from_world(world: &mut World) -> Self {
-        let asset_server = world.resource::<AssetServer>();
-        [(
-            ImageKey::Ducky,
-            asset_server.load_with_settings(
-                "images/ducky.png",
-                |settings: &mut ImageLoaderSettings| {
-                    settings.sampler = ImageSampler::nearest();
-                },
-            ),
-        )]
-        .into()
-    }
-}
+// impl FromWorld for HandleMap<ImageKey> {
+//     fn from_world(world: &mut World) -> Self {
+//         let asset_server = world.resource::<AssetServer>();
+//         [(
+//             ImageKey::Ducky,
+//             asset_server.load_with_settings(
+//                 "images/ducky.png",
+//                 |settings: &mut ImageLoaderSettings| {
+//                     settings.sampler = ImageSampler::nearest();
+//                 },
+//             ),
+//         )]
+//         .into()
+//     }
+// }
 
 pub const DEFAULT_FONT_KEY: FontKey = FontKey::RomanSD;
 
@@ -249,6 +244,11 @@ pub enum GltfKey {
     Rock,
     Gladiator,
     Dummy,
+    Jug1,
+    Jug2,
+    Jug3,
+    Jug4,
+    Jug5,
 }
 
 impl AssetKey for GltfKey {
@@ -265,6 +265,11 @@ impl FromWorld for HandleMap<GltfKey> {
                 asset_server.load("models/gladiator.glb"),
             ),
             (GltfKey::Dummy, asset_server.load("models/dummy.glb")),
+            (GltfKey::Jug1, asset_server.load("models/jug1.glb")),
+            (GltfKey::Jug2, asset_server.load("models/jug2.glb")),
+            (GltfKey::Jug3, asset_server.load("models/jug3.glb")),
+            (GltfKey::Jug4, asset_server.load("models/jug4.glb")),
+            (GltfKey::Jug5, asset_server.load("models/jug5.glb")),
         ]
         .into()
     }
@@ -298,6 +303,7 @@ impl<K: AssetKey> HandleMap<K> {
 /// Flags tracking which assets still need to be processed
 pub struct AssetsProcessing {
     pub dummy: bool,
+    pub jugs: bool,
 }
 
 pub fn process_dummy_asset(
@@ -327,9 +333,36 @@ pub fn process_dummy_asset(
     assets_processing.dummy = true;
 }
 
+pub fn process_jug_asset(
+    mut commands: Commands,
+    gltf_handles: Res<HandleMap<GltfKey>>,
+    assets_gltf: Res<Assets<Gltf>>,
+    assets_gltfmesh: Res<Assets<GltfMesh>>,
+    meshes: ResMut<Assets<Mesh>>,
+    mut assets_processing: ResMut<AssetsProcessing>,
+) {
+    let gltf_handle = &gltf_handles[&GltfKey::Jug1];
+    let Some(gltf) = assets_gltf.get(gltf_handle) else {
+        return;
+    };
+    let Some(gltf_mesh) = assets_gltfmesh.get(&gltf.meshes[0]) else {
+        return;
+    };
+    let mesh_handle = &gltf_mesh.primitives[0].mesh;
+    let Some(mesh) = meshes.get(mesh_handle) else {
+        return;
+    };
+
+    let Some(collider) = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::ConvexHull) else {
+        return;
+    };
+    commands.insert_resource(JugCachedData { collider });
+    assets_processing.jugs = true;
+}
+
 pub fn all_assets_loaded(
     asset_server: Res<AssetServer>,
-    image_handles: Res<HandleMap<ImageKey>>,
+    // image_handles: Res<HandleMap<ImageKey>>,
     sfx_handles: Res<HandleMap<SfxKey>>,
     soundtrack_handles: Res<HandleMap<SoundtrackKey>>,
     gltf_handles: Res<HandleMap<GltfKey>>,
@@ -337,8 +370,8 @@ pub fn all_assets_loaded(
     animation_handles: Res<HandleMap<AnimationKey>>,
     font_handles: Res<HandleMap<FontKey>>,
 ) -> bool {
-    image_handles.all_loaded(&asset_server)
-        && sfx_handles.all_loaded(&asset_server)
+    // image_handles.all_loaded(&asset_server)
+    sfx_handles.all_loaded(&asset_server)
         && soundtrack_handles.all_loaded(&asset_server)
         && gltf_handles.all_loaded(&asset_server)
         && scene_handles.all_loaded(&asset_server)
@@ -347,5 +380,5 @@ pub fn all_assets_loaded(
 }
 
 pub fn all_assets_processed(assets_processing: Res<AssetsProcessing>) -> bool {
-    assets_processing.dummy
+    assets_processing.dummy && assets_processing.jugs
 }
