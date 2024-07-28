@@ -1,4 +1,4 @@
-//! The title screen that appears when the game starts.
+//! The screen that appears when the game starts.
 
 use bevy::prelude::*;
 
@@ -7,21 +7,23 @@ use crate::{
     game::{
         assets::{FontKey, HandleMap},
         camera::{PanOrbitSettings, PanOrbitState},
-        spawn::arena::SpawnArena,
     },
     ui::prelude::*,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::Title), enter_title);
+    app.add_systems(OnEnter(Screen::MainMenu), enter_title);
 
-    app.register_type::<TitleAction>();
-    app.add_systems(Update, handle_title_action.run_if(in_state(Screen::Title)));
+    app.register_type::<MainMenuAction>();
+    app.add_systems(
+        Update,
+        handle_title_action.run_if(in_state(Screen::MainMenu)),
+    );
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 #[reflect(Component)]
-enum TitleAction {
+enum MainMenuAction {
     Play,
     // Credits,
     /// Exit doesn't work well with embedded applications.
@@ -35,8 +37,6 @@ fn enter_title(
     font_handles: Res<HandleMap<FontKey>>,
     mut camera_query: Query<(&mut PanOrbitState, &mut PanOrbitSettings)>,
 ) {
-    commands.trigger(SpawnArena);
-
     let font = font_handles.get(&FontKey::RomanSD).unwrap().clone();
     // Seems to need additonal setings. Spacing is not right
     // let new_default_font = fonts
@@ -47,9 +47,9 @@ fn enter_title(
 
     commands
         .bottom_ui_root()
-        .insert(StateScoped(Screen::Title))
+        .insert(StateScoped(Screen::MainMenu))
         .with_children(|children| {
-            children.button("Play", font).insert(TitleAction::Play);
+            children.button("Play", font).insert(MainMenuAction::Play);
             // children.button("Credits").insert(TitleAction::Credits);
 
             // #[cfg(not(target_family = "wasm"))]
@@ -70,16 +70,16 @@ fn enter_title(
 
 fn handle_title_action(
     mut next_screen: ResMut<NextState<Screen>>,
-    mut button_query: InteractionQuery<&TitleAction>,
+    mut button_query: InteractionQuery<&MainMenuAction>,
     #[cfg(not(target_family = "wasm"))] mut app_exit: EventWriter<AppExit>,
 ) {
     for (interaction, action) in &mut button_query {
         if matches!(interaction, Interaction::Pressed) {
             match action {
-                TitleAction::Play => next_screen.set(Screen::Playing),
+                MainMenuAction::Play => next_screen.set(Screen::Playing),
                 // TitleAction::Credits => next_screen.set(Screen::Credits),
                 #[cfg(not(target_family = "wasm"))]
-                TitleAction::Exit => {
+                MainMenuAction::Exit => {
                     app_exit.send(AppExit::Success);
                 }
             }

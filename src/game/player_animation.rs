@@ -2,7 +2,10 @@
 
 use std::time::Duration;
 
-use bevy::{animation::animate_targets, prelude::*};
+use bevy::{
+    animation::{animate_targets, RepeatAnimation},
+    prelude::*,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<EquipmentSlot>();
@@ -27,8 +30,9 @@ use super::{
     sword::slicing::SliceEvent,
 };
 
-pub const RIGHT_HAND_SLOT: &str = "EquipmentHandle.R";
-pub const LEFT_HAND_SLOT: &str = "EquipmentHandle.L";
+pub const RIGHT_HAND_SLOT: &str = "EquipmentSlot.R";
+pub const SHIELD_SLOT: &str = "mixamorig:LeftForeArm";
+pub const HEAD_SLOT: &str = "EquipmentSlot.H";
 
 pub const PLAYER_SLASH_ANIMATION_SPEED: f32 = 3.4;
 
@@ -47,7 +51,7 @@ fn setup_player_animations(
 ) {
     let mut graph = AnimationGraph::new();
     let idle_anim = graph.add_clip(
-        anim_handles[&AnimationKey::GladiatorIdle].clone_weak(),
+        anim_handles[&AnimationKey::GladiatorFightIdle].clone_weak(),
         1.0,
         graph.root,
     );
@@ -99,14 +103,16 @@ fn attach_player_animations(
 #[derive(Debug, Clone, Reflect, PartialEq, Eq)]
 pub enum EquipmentSlot {
     RightHand,
-    LeftHand,
+    Shield,
+    Head,
 }
 
 impl EquipmentSlot {
     pub fn to_name(&self) -> &str {
         match self {
             EquipmentSlot::RightHand => RIGHT_HAND_SLOT,
-            EquipmentSlot::LeftHand => LEFT_HAND_SLOT,
+            EquipmentSlot::Shield => SHIELD_SLOT,
+            EquipmentSlot::Head => HEAD_SLOT,
         }
     }
 }
@@ -219,7 +225,8 @@ fn return_to_idle(
                     animations.idle_anim,
                     Duration::from_millis(50),
                 )
-                .set_speed(1.0);
+                .set_speed(1.0)
+                .set_repeat(RepeatAnimation::Forever);
         }
     }
 }

@@ -35,5 +35,5 @@ fn exit_playing(mut _commands: Commands) {
 }
 
 fn return_to_title_screen(mut next_screen: ResMut<NextState<Screen>>) {
-    next_screen.set(Screen::Title);
+    next_screen.set(Screen::MainMenu);
 }

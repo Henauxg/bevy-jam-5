@@ -32,7 +32,7 @@ fn spawn_shield(
         },
         Shield,
         EquipmentToAttach {
-            slot: EquipmentSlot::RightHand, // TODO Use left hand once slot is there
+            slot: EquipmentSlot::Shield,
         },
     ));
 }

@@ -6,9 +6,8 @@ use bevy::prelude::*;
 
 pub mod arena;
 pub mod dummy;
-pub mod mine_scene;
+pub mod helmet;
 pub mod player;
-pub mod rock;
 pub mod shield;
 pub mod sword;
 
@@ -18,8 +17,7 @@ pub(super) fn plugin(app: &mut App) {
         player::plugin,
         sword::plugin,
         shield::plugin,
-        mine_scene::plugin,
-        rock::plugin,
+        helmet::plugin,
         dummy::plugin,
     ));
 }

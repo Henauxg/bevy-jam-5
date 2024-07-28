@@ -5,6 +5,8 @@ use crate::{
     screen::Screen,
 };
 
+use super::helmet::SpawnHelmet;
+
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_player);
     app.register_type::<Player>();
@@ -38,4 +40,6 @@ fn spawn_player(
         },
         Player,
     ));
+
+    commands.trigger(SpawnHelmet);
 }

@@ -150,6 +150,7 @@ pub enum SceneKey {
     Gladiator,
     Sword,
     Shield,
+    Helmet,
     Dummy,
     Arena,
     GroundDetails,
@@ -181,6 +182,10 @@ impl FromWorld for HandleMap<SceneKey> {
                 asset_server.load("models/sword.glb#Scene0"),
             ),
             (
+                SceneKey::Helmet,
+                asset_server.load("models/helmet.glb#Scene0"),
+            ),
+            (
                 SceneKey::Arena,
                 asset_server.load("models/arena.glb#Scene0"),
             ),
@@ -196,8 +201,10 @@ impl FromWorld for HandleMap<SceneKey> {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum AnimationKey {
     GladiatorWalk,
-    GladiatorIdle,
+    GladiatorFightIdle,
     GladiatorSlash,
+    GladiatorBlock,
+    GladiatorThrow,
 }
 
 impl AssetKey for AnimationKey {
@@ -209,20 +216,23 @@ impl FromWorld for HandleMap<AnimationKey> {
         let asset_server = world.resource::<AssetServer>();
         [
             (
-                AnimationKey::GladiatorWalk,
+                AnimationKey::GladiatorFightIdle,
                 asset_server.load(GltfAssetLabel::Animation(0).from_asset("models/gladiator.glb")),
             ),
-            // Slash too ?
-            // (
-            //     AnimationKey::GladiatorIdle,
-            //     asset_server.load(GltfAssetLabel::Animation(2).from_asset("models/gladiator.glb")),
-            // ),
             (
-                AnimationKey::GladiatorSlash,
+                AnimationKey::GladiatorBlock,
                 asset_server.load(GltfAssetLabel::Animation(1).from_asset("models/gladiator.glb")),
             ),
             (
-                AnimationKey::GladiatorIdle,
+                AnimationKey::GladiatorSlash,
+                asset_server.load(GltfAssetLabel::Animation(2).from_asset("models/gladiator.glb")),
+            ),
+            (
+                AnimationKey::GladiatorThrow,
+                asset_server.load(GltfAssetLabel::Animation(3).from_asset("models/gladiator.glb")),
+            ),
+            (
+                AnimationKey::GladiatorWalk,
                 asset_server.load(GltfAssetLabel::Animation(4).from_asset("models/gladiator.glb")),
             ),
         ]
