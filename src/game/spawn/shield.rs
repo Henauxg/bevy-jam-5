@@ -7,32 +7,32 @@ use crate::game::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.observe(spawn_sword);
-    app.register_type::<Sword>();
+    app.observe(spawn_shield);
+    app.register_type::<Shield>();
 }
 
 #[derive(Event, Debug)]
-pub struct SpawnSword;
+pub struct SpawnShield;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
-pub struct Sword;
+pub struct Shield;
 
-fn spawn_sword(
-    _trigger: Trigger<SpawnSword>,
+fn spawn_shield(
+    _trigger: Trigger<SpawnShield>,
     mut commands: Commands,
     scenes_handles: Res<HandleMap<SceneKey>>,
 ) {
     commands.spawn((
-        Name::new("Sword"),
-        StateScoped(ArenaMode::Sword),
+        Name::new("Shield"),
+        StateScoped(ArenaMode::Shield),
         SceneBundle {
-            scene: scenes_handles[&SceneKey::Sword].clone_weak(),
+            scene: scenes_handles[&SceneKey::Shield].clone_weak(),
             transform: Transform::IDENTITY,
             ..default()
         },
-        Sword,
+        Shield,
         EquipmentToAttach {
-            slot: EquipmentSlot::RightHand,
+            slot: EquipmentSlot::RightHand, // TODO Use left hand once slot is there
         },
     ));
 }

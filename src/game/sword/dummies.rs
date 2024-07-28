@@ -11,6 +11,7 @@ use bevy::{
     },
     reflect::Reflect,
     time::{Time, Timer, TimerMode},
+    utils::default,
 };
 use rand::Rng;
 
@@ -50,7 +51,7 @@ pub(super) fn plugin(app: &mut App) {
     app.observe(queue_dummy_slot_free);
 }
 
-#[derive(Resource, Default, Reflect)]
+#[derive(Resource, Reflect)]
 pub struct DummiesData {
     dummy_slots: Vec<Entity>,
     free_slot_indexes: Vec<usize>,
@@ -58,6 +59,21 @@ pub struct DummiesData {
 
     spawn_timer: Timer,
     max_dummy_count: usize,
+}
+
+impl Default for DummiesData {
+    fn default() -> Self {
+        Self {
+            spawn_timer: Timer::new(
+                Duration::from_millis(DUMMIES_SPAWN_TIMER_MS),
+                TimerMode::Once,
+            ),
+            max_dummy_count: MAX_DUMMIES_COUNT,
+            dummy_slots: default(),
+            free_slot_indexes: default(),
+            slot_indexes_to_free: default(),
+        }
+    }
 }
 
 #[derive(Reflect)]

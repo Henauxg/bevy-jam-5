@@ -34,12 +34,12 @@ fn apply_interaction_palette(
 
 fn trigger_interaction_sfx(
     mut interactions: Query<&Interaction, Changed<Interaction>>,
-    mut commands: Commands,
+    mut _commands: Commands,
 ) {
     for interaction in &mut interactions {
         match interaction {
-            Interaction::Hovered => commands.trigger(PlaySfx::Key(SfxKey::ButtonHover)),
-            Interaction::Pressed => commands.trigger(PlaySfx::Key(SfxKey::ButtonPress)),
+            // Interaction::Hovered => commands.trigger(PlaySfx::Key(SfxKey::ButtonHover)),
+            // Interaction::Pressed => commands.trigger(PlaySfx::Key(SfxKey::ButtonPress)),
             _ => (),
         }
     }

@@ -11,6 +11,8 @@ use bevy::{
     time::Time,
 };
 
+use super::assets::{FontKey, HandleMap};
+
 pub const DEFAULT_BAD_ACTION_SCORE: f32 = -5.;
 pub const DEFAULT_GOOD_ACTION_SCORE: f32 = 10.;
 pub const DEFAULT_PERFECT_ACTION_SCORE: f32 = 15.;
@@ -100,18 +102,29 @@ pub struct HighscoreText;
 #[derive(Component)]
 pub struct DifficultyTimerText;
 
-pub fn setup_score_ui(mut commands: Commands) {
+pub fn setup_score_ui(mut commands: Commands, font_handles: Res<HandleMap<FontKey>>) {
+    let font = font_handles.get(&FontKey::RomanSD).unwrap().clone();
     commands
-        .ui_root()
+        .bottom_ui_root()
         .insert(StateScoped(Screen::Playing))
         .with_children(|children| {
-            children.dynamic_label_with_marker("Score ", "0", ScoreText);
+            children.dynamic_label_with_marker("Score: ", "0", ScoreText, font.clone_weak());
         })
         .with_children(|children| {
-            children.dynamic_label_with_marker("Highscore ", "0", HighscoreText);
+            children.dynamic_label_with_marker(
+                "Highscore: ",
+                "0",
+                HighscoreText,
+                font.clone_weak(),
+            );
         })
         .with_children(|children| {
-            children.dynamic_label_with_marker("Time ", "0", DifficultyTimerText);
+            children.dynamic_label_with_marker(
+                "Time: ",
+                "0",
+                DifficultyTimerText,
+                font.clone_weak(),
+            );
         });
 }
 

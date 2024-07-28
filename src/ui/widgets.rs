@@ -7,7 +7,7 @@ use super::{interaction::InteractionPalette, palette::*};
 /// An extension trait for spawning UI widgets.
 pub trait Widgets {
     /// Spawn a simple button with text.
-    fn button(&mut self, text: impl Into<String>) -> EntityCommands;
+    fn button(&mut self, text: impl Into<String>, font: Handle<Font>) -> EntityCommands;
 
     /// Spawn a simple header label. Bigger than [`Widgets::label`].
     fn header(&mut self, text: impl Into<String>) -> EntityCommands;
@@ -21,26 +21,28 @@ pub trait Widgets {
         title: impl Into<String>,
         text: impl Into<String>,
         marker: C,
+        font: Handle<Font>,
     ) -> EntityCommands;
 }
 
 impl<T: Spawn> Widgets for T {
-    fn button(&mut self, text: impl Into<String>) -> EntityCommands {
+    fn button(&mut self, text: impl Into<String>, font: Handle<Font>) -> EntityCommands {
         let mut entity = self.spawn((
             Name::new("Button"),
             ButtonBundle {
                 style: Style {
-                    width: Px(200.0),
-                    height: Px(65.0),
+                    width: Px(170.0),
+                    height: Px(55.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                background_color: BackgroundColor(NODE_BACKGROUND),
+                background_color: BackgroundColor(NODE_BACKGROUND_COLOR),
+                border_radius: BorderRadius::all(Val::Px(5.)),
                 ..default()
             },
             InteractionPalette {
-                none: NODE_BACKGROUND,
+                none: NODE_BACKGROUND_COLOR,
                 hovered: BUTTON_HOVERED_BACKGROUND,
                 pressed: BUTTON_PRESSED_BACKGROUND,
             },
@@ -52,7 +54,8 @@ impl<T: Spawn> Widgets for T {
                     text,
                     TextStyle {
                         font_size: 40.0,
-                        color: BUTTON_TEXT,
+                        color: BUTTON_TEXT_COLOR,
+                        font,
                         ..default()
                     },
                 ),
@@ -72,7 +75,7 @@ impl<T: Spawn> Widgets for T {
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                background_color: BackgroundColor(NODE_BACKGROUND),
+                background_color: BackgroundColor(NODE_BACKGROUND_COLOR),
                 ..default()
             },
         ));
@@ -83,7 +86,7 @@ impl<T: Spawn> Widgets for T {
                     text,
                     TextStyle {
                         font_size: 40.0,
-                        color: HEADER_TEXT,
+                        color: HEADER_TEXT_COLOR,
                         ..default()
                     },
                 ),
@@ -111,8 +114,8 @@ impl<T: Spawn> Widgets for T {
                 TextBundle::from_section(
                     text,
                     TextStyle {
-                        font_size: 24.0,
-                        color: LABEL_TEXT,
+                        font_size: LABEL_SIZE,
+                        color: LABEL_TEXT_COLOR_2,
                         ..default()
                     },
                 ),
@@ -126,6 +129,7 @@ impl<T: Spawn> Widgets for T {
         title: impl Into<String>,
         text: impl Into<String>,
         marker: C,
+        font: Handle<Font>,
     ) -> EntityCommands {
         let mut entity = self.spawn((
             Name::new("Label"),
@@ -146,16 +150,18 @@ impl<T: Spawn> Widgets for T {
                     TextSection {
                         value: title.into(),
                         style: TextStyle {
-                            font_size: 24.0,
-                            color: LABEL_TEXT,
+                            font_size: LABEL_SIZE,
+                            color: LABEL_TEXT_COLOR_2,
+                            font: font.clone_weak(),
                             ..default()
                         },
                     },
                     TextSection {
                         value: text.into(),
                         style: TextStyle {
-                            font_size: 24.0,
-                            color: LABEL_TEXT,
+                            font_size: LABEL_SIZE,
+                            color: LABEL_TEXT_COLOR_2,
+                            font: font.clone_weak(),
                             ..default()
                         },
                     },
@@ -172,6 +178,8 @@ pub trait Containers {
     /// Spawns a root node that covers the full screen
     /// and centers its content horizontally and vertically.
     fn ui_root(&mut self) -> EntityCommands;
+
+    fn bottom_ui_root(&mut self) -> EntityCommands;
 }
 
 impl Containers for Commands<'_, '_> {
@@ -183,6 +191,25 @@ impl Containers for Commands<'_, '_> {
                     width: Percent(100.0),
                     height: Percent(100.0),
                     justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Px(10.0),
+                    position_type: PositionType::Absolute,
+                    ..default()
+                },
+                ..default()
+            },
+        ))
+    }
+
+    fn bottom_ui_root(&mut self) -> EntityCommands {
+        self.spawn((
+            Name::new("Score UI Root"),
+            NodeBundle {
+                style: Style {
+                    width: Percent(100.0),
+                    height: Percent(95.0),
+                    justify_content: JustifyContent::End,
                     align_items: AlignItems::Center,
                     flex_direction: FlexDirection::Column,
                     row_gap: Px(10.0),

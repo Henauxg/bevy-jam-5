@@ -19,14 +19,14 @@ pub enum ArenaMode {
     None,
     Sword,
     Shield,
+    GameOver,
 }
 
 impl Distribution<ArenaMode> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> ArenaMode {
         match rng.gen_range(0..=1) {
             0 => ArenaMode::Sword,
-            1 => ArenaMode::Shield,
-            _ => ArenaMode::Sword,
+            _ => ArenaMode::Shield,
         }
     }
 }

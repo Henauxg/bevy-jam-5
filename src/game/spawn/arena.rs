@@ -8,15 +8,7 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{ActiveCollisionTypes, Collider, Friction, Restitution};
 
-use crate::{
-    game::{
-        assets::{HandleMap, SceneKey, ASSETS_SCALE},
-        sword::spawning::SpawnDummySlots,
-    },
-    screen::Screen,
-};
-
-use super::player::SpawnPlayer;
+use crate::game::assets::{HandleMap, SceneKey, ASSETS_SCALE};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_arena);
@@ -34,57 +26,45 @@ fn spawn_arena(
     mut materials: ResMut<Assets<StandardMaterial>>,
     scenes_handles: Res<HandleMap<SceneKey>>,
 ) {
-    commands.trigger(SpawnPlayer {
-        pos: DEFAULT_GLADIATOR_POS,
-        looking_at: Vec3::ZERO,
-    });
-
     // Scene lights
     commands.insert_resource(AmbientLight {
         color: Color::Srgba(ORANGE_RED),
         brightness: 0.05,
     });
-    commands.spawn((
-        StateScoped(Screen::Playing),
-        DirectionalLightBundle {
-            directional_light: DirectionalLight {
-                shadows_enabled: true,
-                illuminance: 4000.,
-                color: Color::srgb(1.0, 0.85, 0.65),
-                ..default()
-            },
-            transform: Transform {
-                translation: Vec3::new(5.0, 10.0, 2.0),
-                rotation: Quat::from_euler(EulerRot::ZYX, 0., -PI / 5., -PI / 3.),
-                ..default()
-            },
+    commands.spawn((DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            illuminance: 4000.,
+            color: Color::srgb(1.0, 0.85, 0.65),
             ..default()
         },
-    ));
-    commands.spawn((
-        StateScoped(Screen::Playing),
-        DirectionalLightBundle {
-            directional_light: DirectionalLight {
-                shadows_enabled: false,
-                illuminance: 2000.,
-                color: Color::Srgba(ORANGE_RED),
-                ..default()
-            },
-            transform: Transform {
-                translation: Vec3::new(5.0, 10.0, 2.0),
-                rotation: Quat::from_euler(EulerRot::ZYX, 0., PI * 4. / 5., -PI / 3.),
-                ..default()
-            },
+        transform: Transform {
+            translation: Vec3::new(5.0, 10.0, 2.0),
+            rotation: Quat::from_euler(EulerRot::ZYX, 0., -PI / 5., -PI / 3.),
             ..default()
         },
-    ));
+        ..default()
+    },));
+    commands.spawn((DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: false,
+            illuminance: 2000.,
+            color: Color::Srgba(ORANGE_RED),
+            ..default()
+        },
+        transform: Transform {
+            translation: Vec3::new(5.0, 10.0, 2.0),
+            rotation: Quat::from_euler(EulerRot::ZYX, 0., PI * 4. / 5., -PI / 3.),
+            ..default()
+        },
+        ..default()
+    },));
 
     // Prototype ground
     let radius = 2000.;
     let height = 20.;
     commands.spawn((
         Name::new("Ground"),
-        StateScoped(Screen::Playing),
         PbrBundle {
             mesh: meshes.add(Cylinder::new(radius, height)),
             material: materials.add(StandardMaterial {
@@ -102,7 +82,6 @@ fn spawn_arena(
 
     commands.spawn((
         Name::new("Ground details"),
-        StateScoped(Screen::Playing),
         SceneBundle {
             scene: scenes_handles[&SceneKey::GroundDetails].clone_weak(),
             transform: Transform::from_translation(Vec3::ZERO)
@@ -114,7 +93,6 @@ fn spawn_arena(
     // Arena
     commands.spawn((
         Name::new("Arena"),
-        StateScoped(Screen::Playing),
         SceneBundle {
             scene: scenes_handles[&SceneKey::Arena].clone_weak(),
             transform: Transform::from_translation(Vec3::ZERO)

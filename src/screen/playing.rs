@@ -1,9 +1,10 @@
-//! The screen state for the main game loop.
-
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use super::Screen;
-use crate::game::{arena::ArenaMode, spawn::arena::SpawnArena};
+use crate::game::{
+    arena::ArenaMode,
+    spawn::{arena::DEFAULT_GLADIATOR_POS, player::SpawnPlayer},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Playing), enter_playing);
@@ -17,7 +18,10 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 fn enter_playing(mut commands: Commands, mut next_arena_mode: ResMut<NextState<ArenaMode>>) {
-    commands.trigger(SpawnArena);
+    commands.trigger(SpawnPlayer {
+        pos: DEFAULT_GLADIATOR_POS,
+        looking_at: Vec3::ZERO,
+    });
 
     let random_arena_mode: ArenaMode = rand::random();
     next_arena_mode.set(random_arena_mode);

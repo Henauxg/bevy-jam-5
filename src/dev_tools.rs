@@ -4,7 +4,7 @@ use bevy::{dev_tools::states::log_transitions, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 use crate::{
-    game::{arena::ArenaMode, sword::spawning::debug_draw_dummy_slots},
+    game::{arena::ArenaMode, sword::dummies::debug_draw_dummy_slots},
     screen::Screen,
 };
 

@@ -26,6 +26,9 @@ pub(super) fn plugin(app: &mut App) {
 
     app.register_type::<HandleMap<AnimationKey>>();
     app.init_resource::<HandleMap<AnimationKey>>();
+
+    app.register_type::<HandleMap<FontKey>>();
+    app.init_resource::<HandleMap<FontKey>>();
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
@@ -49,6 +52,27 @@ impl FromWorld for HandleMap<ImageKey> {
                 },
             ),
         )]
+        .into()
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum FontKey {
+    Augustus,
+    RomanSD,
+}
+
+impl AssetKey for FontKey {
+    type Asset = Font;
+}
+
+impl FromWorld for HandleMap<FontKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (FontKey::Augustus, asset_server.load("fonts/augustus.ttf")),
+            (FontKey::RomanSD, asset_server.load("fonts/RomanSD.ttf")),
+        ]
         .into()
     }
 }
@@ -125,6 +149,7 @@ pub enum SceneKey {
     Rock,
     Gladiator,
     Sword,
+    Shield,
     Dummy,
     Arena,
     GroundDetails,
@@ -146,6 +171,10 @@ impl FromWorld for HandleMap<SceneKey> {
             (
                 SceneKey::Dummy,
                 asset_server.load("models/dummy.glb#Scene0"),
+            ),
+            (
+                SceneKey::Shield,
+                asset_server.load("models/shield.glb#Scene0"),
             ),
             (
                 SceneKey::Sword,
@@ -294,6 +323,7 @@ pub fn all_assets_loaded(
     gltf_handles: Res<HandleMap<GltfKey>>,
     scene_handles: Res<HandleMap<SceneKey>>,
     animation_handles: Res<HandleMap<AnimationKey>>,
+    font_handles: Res<HandleMap<FontKey>>,
 ) -> bool {
     image_handles.all_loaded(&asset_server)
         && sfx_handles.all_loaded(&asset_server)
@@ -301,6 +331,7 @@ pub fn all_assets_loaded(
         && gltf_handles.all_loaded(&asset_server)
         && scene_handles.all_loaded(&asset_server)
         && animation_handles.all_loaded(&asset_server)
+        && font_handles.all_loaded(&asset_server)
 }
 
 pub fn all_assets_processed(assets_processing: Res<AssetsProcessing>) -> bool {

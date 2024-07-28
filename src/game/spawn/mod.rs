@@ -9,6 +9,7 @@ pub mod dummy;
 pub mod mine_scene;
 pub mod player;
 pub mod rock;
+pub mod shield;
 pub mod sword;
 
 pub(super) fn plugin(app: &mut App) {
@@ -16,6 +17,7 @@ pub(super) fn plugin(app: &mut App) {
         arena::plugin,
         player::plugin,
         sword::plugin,
+        shield::plugin,
         mine_scene::plugin,
         rock::plugin,
         dummy::plugin,

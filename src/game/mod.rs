@@ -7,6 +7,7 @@ pub mod assets;
 pub mod audio;
 pub mod player_animation;
 pub mod score;
+pub mod shield;
 pub mod spawn;
 pub mod sword;
 
@@ -16,6 +17,7 @@ pub(super) fn plugin(app: &mut App) {
         assets::plugin,
         spawn::plugin,
         sword::plugin,
+        shield::plugin,
         arena::plugin,
         score::plugin,
         player_animation::plugin,

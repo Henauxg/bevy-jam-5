@@ -3,7 +3,13 @@
 use bevy::prelude::*;
 
 use super::Screen;
-use crate::ui::prelude::*;
+use crate::{
+    game::{
+        assets::{FontKey, HandleMap},
+        spawn::arena::SpawnArena,
+    },
+    ui::prelude::*,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Title), enter_title);
@@ -16,22 +22,36 @@ pub(super) fn plugin(app: &mut App) {
 #[reflect(Component)]
 enum TitleAction {
     Play,
-    Credits,
+    // Credits,
     /// Exit doesn't work well with embedded applications.
     #[cfg(not(target_family = "wasm"))]
     Exit,
 }
 
-fn enter_title(mut commands: Commands) {
+fn enter_title(
+    mut commands: Commands,
+    // mut fonts: ResMut<Assets<Font>>,
+    font_handles: Res<HandleMap<FontKey>>,
+) {
+    commands.trigger(SpawnArena);
+
+    let font = font_handles.get(&FontKey::RomanSD).unwrap().clone();
+    // Seems to need additonal setings. Spacing is not right
+    // let new_default_font = fonts
+    //     .get(font_handles.get(&FontKey::Augustus).unwrap())
+    //     .unwrap()
+    //     .clone();
+    // fonts.insert(&Handle::default(), new_default_font);
+
     commands
-        .ui_root()
+        .bottom_ui_root()
         .insert(StateScoped(Screen::Title))
         .with_children(|children| {
-            children.button("Play").insert(TitleAction::Play);
-            children.button("Credits").insert(TitleAction::Credits);
+            children.button("Play", font).insert(TitleAction::Play);
+            // children.button("Credits").insert(TitleAction::Credits);
 
-            #[cfg(not(target_family = "wasm"))]
-            children.button("Exit").insert(TitleAction::Exit);
+            // #[cfg(not(target_family = "wasm"))]
+            // children.button("Exit").insert(TitleAction::Exit);
         });
 }
 
@@ -44,8 +64,7 @@ fn handle_title_action(
         if matches!(interaction, Interaction::Pressed) {
             match action {
                 TitleAction::Play => next_screen.set(Screen::Playing),
-                TitleAction::Credits => next_screen.set(Screen::Credits),
-
+                // TitleAction::Credits => next_screen.set(Screen::Credits),
                 #[cfg(not(target_family = "wasm"))]
                 TitleAction::Exit => {
                     app_exit.send(AppExit::Success);
