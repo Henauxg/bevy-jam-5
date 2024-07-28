@@ -6,6 +6,7 @@ use super::Screen;
 use crate::{
     game::{
         assets::{FontKey, HandleMap},
+        camera::{PanOrbitSettings, PanOrbitState},
         spawn::arena::SpawnArena,
     },
     ui::prelude::*,
@@ -32,6 +33,7 @@ fn enter_title(
     mut commands: Commands,
     // mut fonts: ResMut<Assets<Font>>,
     font_handles: Res<HandleMap<FontKey>>,
+    mut camera_query: Query<(&mut PanOrbitState, &mut PanOrbitSettings)>,
 ) {
     commands.trigger(SpawnArena);
 
@@ -53,6 +55,17 @@ fn enter_title(
             // #[cfg(not(target_family = "wasm"))]
             // children.button("Exit").insert(TitleAction::Exit);
         });
+
+    // Setup camera
+    let Ok((mut cam_state, mut cam_settings)) = camera_query.get_single_mut() else {
+        return;
+    };
+    cam_state.center = Vec3::ZERO;
+    cam_state.radius = 25.68;
+    cam_state.pitch = -0.28100345;
+    cam_state.yaw = -0.7212212;
+
+    cam_settings.auto_orbit = true;
 }
 
 fn handle_title_action(

@@ -5,6 +5,7 @@ use bevy::prelude::*;
 pub mod arena;
 pub mod assets;
 pub mod audio;
+pub mod camera;
 pub mod player_animation;
 pub mod score;
 pub mod shield;

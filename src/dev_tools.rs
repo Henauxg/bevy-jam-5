@@ -1,19 +1,33 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
-use bevy::{dev_tools::states::log_transitions, prelude::*};
+use bevy::{
+    dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*,
+};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 use crate::{
-    game::{arena::ArenaMode, sword::dummies::debug_draw_dummy_slots},
+    game::{
+        arena::ArenaMode,
+        camera::{display_pan_orbit_camera_state, update_pan_orbit_camera},
+        sword::dummies::debug_draw_dummy_slots,
+    },
     screen::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(WorldInspectorPlugin::new());
 
-    // Print state transitions in dev builds
-    app.add_systems(Update, log_transitions::<Screen>);
-    app.add_systems(Update, log_transitions::<ArenaMode>);
-
-    app.add_systems(Update, debug_draw_dummy_slots);
+    app.add_systems(
+        Update,
+        (
+            // Print state transitions in dev builds
+            log_transitions::<Screen>,
+            log_transitions::<ArenaMode>,
+            // Debug rendering
+            debug_draw_dummy_slots,
+            // Debug camera controls
+            update_pan_orbit_camera,
+            display_pan_orbit_camera_state.run_if(input_just_pressed(KeyCode::KeyC)),
+        ),
+    );
 }

@@ -6,7 +6,6 @@ license = "MIT OR Apache-2.0 OR CC0-1.0"
 
 [dependencies]
 bevy_ghx_destruction = { git = "https://github.com/Henauxg/bevy_ghx_destruction.git" }
-bevy_ghx_utils = { git = "https://github.com/Henauxg/bevy_ghx_utils.git" }
 bevy = { version = "0.14", features = [
     "wayland",
 

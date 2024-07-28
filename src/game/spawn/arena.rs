@@ -14,7 +14,7 @@ pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_arena);
 }
 
-pub const DEFAULT_GLADIATOR_POS: Vec3 = Vec3::new(0., 0., -1.5);
+pub const DEFAULT_GLADIATOR_POS: Vec3 = Vec3::new(0., 0., -2.5);
 
 #[derive(Event, Debug)]
 pub struct SpawnArena;

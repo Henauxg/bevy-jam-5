@@ -687,14 +687,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_ghx_utils"
-version = "0.4.0"
-source = "git+https://github.com/Henauxg/bevy_ghx_utils.git#a87eda60577b982f3f9962044a860d455bd1f98f"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "bevy_gilrs"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -853,7 +845,6 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_ghx_destruction",
- "bevy_ghx_utils",
  "bevy_mod_raycast",
  "bevy_rapier3d",
  "log",
@@ -2182,8 +2173,8 @@ dependencies = [
 
 [[package]]
 name = "ghx_constrained_delaunay"
-version = "0.1.1"
-source = "git+https://github.com/Henauxg/ghx_constrained_delaunay.git#f96a25b999adfd3fe1eb27b1cac6744c473dbdd8"
+version = "0.1.2"
+source = "git+https://github.com/Henauxg/ghx_constrained_delaunay.git#b9f28b72890ff01d2e7852377335a344cd908ad3"
 dependencies = [
  "arrayvec",
  "glam",

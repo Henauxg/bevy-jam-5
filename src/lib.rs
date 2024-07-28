@@ -7,15 +7,11 @@ mod ui;
 use bevy::{
     asset::AssetMetaCheck,
     audio::{AudioPlugin, Volume},
-    input::common_conditions::input_just_pressed,
     prelude::*,
-};
-use bevy_ghx_utils::camera::{
-    display_pan_orbit_camera_state, update_pan_orbit_camera, PanOrbitCameraBundle,
-    PanOrbitSettings, PanOrbitState,
 };
 use bevy_mod_raycast::cursor::CursorRayPlugin;
 use bevy_rapier3d::plugin::{NoUserData, RapierPhysicsPlugin};
+use game::camera::{PanOrbitCameraBundle, PanOrbitSettings, PanOrbitState};
 
 pub struct AppPlugin;
 
@@ -57,13 +53,7 @@ impl Plugin for AppPlugin {
         );
 
         // Spawn the main camera.
-        app.add_systems(Startup, spawn_camera).add_systems(
-            Update,
-            (
-                update_pan_orbit_camera,
-                display_pan_orbit_camera_state.run_if(input_just_pressed(KeyCode::KeyC)),
-            ),
-        );
+        app.add_systems(Startup, spawn_camera);
 
         // Add other plugins.
         app.add_plugins((
