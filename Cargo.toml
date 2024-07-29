@@ -26,6 +26,7 @@ bevy_mod_raycast = "0.18.0"
 bevy_rapier3d = "0.27.0"
 bevy_mod_billboard = "0.7.0"
 bevy_tweening = { version = "0.11.0", features = ["bevy_text"] }
+# bevy_embedded_assets = "0.11.0"
 
 # bevy-inspector-egui = "0.25.1"
 
@@ -42,9 +43,9 @@ dev = [
 dev_native = [
     "dev",
     # Enable asset hot reloading for native dev builds.
-    "bevy/file_watcher",
+    # "bevy/file_watcher",
     # Enable embedded asset hot reloading for native dev builds.
-    "bevy/embedded_watcher",
+    # "bevy/embedded_watcher",
 ]
 
 # Idiomatic Bevy code often triggers these lints, and the CI workflow treats them as errors.
