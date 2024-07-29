@@ -4,6 +4,9 @@ use bevy_rapier3d::prelude::{Collider, ComputedColliderShape};
 use super::spawn::{dummy::DummyCachedData, jug::JugCachedData, shield::ShieldCachedData};
 
 pub const ASSETS_SCALE: f32 = 1.;
+pub const ARENA_SCALE: f32 = 0.75;
+
+pub const DEFAULT_FONT_KEY: FontKey = FontKey::Augustus;
 
 pub(super) fn plugin(app: &mut App) {
     // app.register_type::<HandleMap<ImageKey>>();
@@ -52,8 +55,6 @@ pub(super) fn plugin(app: &mut App) {
 //         .into()
 //     }
 // }
-
-pub const DEFAULT_FONT_KEY: FontKey = FontKey::RomanSD;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum FontKey {

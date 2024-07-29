@@ -8,7 +8,7 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{ActiveCollisionTypes, Collider, Friction, Restitution};
 
-use crate::game::assets::{HandleMap, SceneKey, ASSETS_SCALE};
+use crate::game::assets::{HandleMap, SceneKey, ARENA_SCALE, ASSETS_SCALE};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_arena);
@@ -100,7 +100,7 @@ fn spawn_arena(
             scene: scenes_handles[&SceneKey::Arena].clone_weak(),
             transform: Transform::from_translation(Vec3::ZERO)
                 // .looking_at(spawn_info.looking_at, Vec3::Y)
-                .with_scale(Vec3::splat(ASSETS_SCALE)),
+                .with_scale(Vec3::splat(ARENA_SCALE)),
             ..default()
         },
     ));

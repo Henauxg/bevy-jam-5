@@ -5,12 +5,12 @@ use crate::ui::prelude::*;
 use bevy::{
     app::{App, Update},
     color::{
-        palettes::css::{BLUE, GREEN, RED},
+        palettes::css::{LIGHT_BLUE, LIGHT_GREEN, RED},
         Alpha, Color,
     },
     math::Vec3,
     prelude::{
-        in_state, BuildChildren, Commands, Component, DespawnRecursiveExt, Entity, Event,
+        in_state, BuildChildren, Camera, Commands, Component, DespawnRecursiveExt, Entity, Event,
         IntoSystemConfigs, OnEnter, ParamSet, Query, Res, ResMut, Resource, StateScoped, Transform,
         Trigger, With,
     },
@@ -36,9 +36,9 @@ pub const DIFFICULTY_FACTOR_PER_SEC: f32 = 0.01;
 
 pub const SCORE_BILLBOARDS_TEXT_DURATION_MS: u64 = 1850;
 pub const SCORE_BILLBOARD_TEXT_COLOR_BAD: Color = Color::Srgba(RED);
-pub const SCORE_BILLBOARD_TEXT_COLOR_GOOD: Color = Color::Srgba(BLUE);
-pub const SCORE_BILLBOARD_TEXT_COLOR_PERFECT: Color = Color::Srgba(GREEN);
-pub const SCORE_BILLBOARDS_TEXT_SIZE: f32 = 60.0;
+pub const SCORE_BILLBOARD_TEXT_COLOR_GOOD: Color = Color::Srgba(LIGHT_BLUE);
+pub const SCORE_BILLBOARD_TEXT_COLOR_PERFECT: Color = Color::Srgba(LIGHT_GREEN);
+pub const SCORE_BILLBOARDS_TEXT_SIZE: f32 = 66.0;
 pub const SCORE_BILLBOARDS_SCALE: f32 = 0.03;
 pub const SCORE_BILLBOARDS_FROM_DELTA: f32 = 4.;
 pub const SCORE_BILLBOARDS_TO_DELTA: f32 = 8.;
@@ -78,6 +78,28 @@ pub enum ScoreActionType {
     Good,
     Perfect,
 }
+impl ScoreActionType {
+    fn to_properties(&self) -> (f32, Color, &str) {
+        match self {
+            ScoreActionType::Bad => (
+                DEFAULT_BAD_ACTION_SCORE,
+                SCORE_BILLBOARD_TEXT_COLOR_BAD,
+                "Miss",
+            ),
+            ScoreActionType::Good => (
+                DEFAULT_GOOD_ACTION_SCORE,
+                SCORE_BILLBOARD_TEXT_COLOR_GOOD,
+                "Good",
+            ),
+            ScoreActionType::Perfect => (
+                DEFAULT_PERFECT_ACTION_SCORE,
+                SCORE_BILLBOARD_TEXT_COLOR_PERFECT,
+                "Perfect",
+            ),
+        }
+    }
+}
+
 #[derive(Event, Clone, Reflect)]
 pub struct ScoreAction {
     pub action: ScoreActionType,
@@ -91,25 +113,23 @@ pub fn handle_score_actions(
     mut score: ResMut<Score>,
     difficulty: ResMut<Difficulty>,
     font_handles: Res<HandleMap<FontKey>>,
+    camera_query: Query<&Transform, With<Camera>>,
 ) {
-    let score_action = &trigger.event();
-    let (score_action_raw_value, billboard_text_color) = match score_action.action {
-        ScoreActionType::Bad => (DEFAULT_BAD_ACTION_SCORE, SCORE_BILLBOARD_TEXT_COLOR_BAD),
-        ScoreActionType::Good => (DEFAULT_GOOD_ACTION_SCORE, SCORE_BILLBOARD_TEXT_COLOR_GOOD),
-        ScoreActionType::Perfect => (
-            DEFAULT_PERFECT_ACTION_SCORE,
-            SCORE_BILLBOARD_TEXT_COLOR_PERFECT,
-        ),
+    let Ok(cam_transform) = camera_query.get_single() else {
+        return;
     };
+    let score_action = trigger.event();
+    let (score_action_raw_value, billboard_text_color, action_text) =
+        score_action.action.to_properties();
     let difficulty_factor = MAX_DIFFICULTY_FACTOR.min(
         INITIAL_DIFFICULTY_FACTOR + difficulty.time_elapsed_s as f32 * DIFFICULTY_FACTOR_PER_SEC,
     );
     let (rounded_action_value, action_text) = if score_action_raw_value > 0. {
         let value = (score_action_raw_value / difficulty_factor) as i32;
-        (value, format!("+{}", value))
+        (value, format!("{} (+{})", action_text, value))
     } else {
         let value = (score_action_raw_value * difficulty_factor) as i32;
-        (value, format!("{}", value))
+        (value, format!("{} ({})", action_text, value))
     };
 
     score.current += rounded_action_value;
@@ -139,13 +159,13 @@ pub fn handle_score_actions(
             section: 0,
         },
     );
+    // Depends on the distance to the camera
+    let billboard_scale = (cam_transform.translation - score_action.pos).length() / 80.
+        * Vec3::splat(SCORE_BILLBOARDS_SCALE);
     commands.spawn((
         StateScoped(Screen::Playing),
         BillboardTextBundle {
-            transform: Transform::from_translation(
-                score_action.pos + SCORE_BILLBOARDS_FROM_DELTA * Vec3::Y,
-            )
-            .with_scale(Vec3::splat(SCORE_BILLBOARDS_SCALE)),
+            transform: Transform::from_scale(billboard_scale),
             text: Text::from_sections([TextSection {
                 value: action_text,
                 style: TextStyle {
@@ -226,7 +246,11 @@ pub fn setup_score_ui(mut commands: Commands, font_handles: Res<HandleMap<FontKe
                 HighscoreText,
                 font.clone_weak(),
             );
-        })
+        });
+
+    commands
+        .top_ui_root()
+        .insert(StateScoped(Screen::Playing))
         .with_children(|children| {
             children.dynamic_label_with_marker(
                 "Time: ",
