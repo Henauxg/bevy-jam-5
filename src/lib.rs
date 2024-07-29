@@ -13,7 +13,9 @@ use bevy_mod_billboard::plugin::BillboardPlugin;
 use bevy_mod_raycast::cursor::CursorRayPlugin;
 use bevy_rapier3d::plugin::{NoUserData, RapierPhysicsPlugin};
 use bevy_tweening::TweeningPlugin;
-use game::camera::{PanOrbitCameraBundle, PanOrbitSettings, PanOrbitState};
+use game::camera::{
+    update_pan_orbit_camera, PanOrbitCameraBundle, PanOrbitSettings, PanOrbitState,
+};
 
 pub struct AppPlugin;
 
@@ -26,7 +28,8 @@ impl Plugin for AppPlugin {
         );
 
         // Add Bevy plugins.
-        app.add_plugins(
+        app.add_plugins((
+            // EmbeddedAssetPlugin::default(),
             DefaultPlugins
                 .set(AssetPlugin {
                     // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -37,7 +40,7 @@ impl Plugin for AppPlugin {
                 })
                 .set(WindowPlugin {
                     primary_window: Window {
-                        title: "bevy-jam-5".to_string(),
+                        title: "Versatilus Maximus Gamus Jamus V".to_string(),
                         canvas: Some("#bevy".to_string()),
                         fit_canvas_to_parent: true,
                         prevent_default_event_handling: true,
@@ -52,10 +55,11 @@ impl Plugin for AppPlugin {
                     },
                     ..default()
                 }),
-        );
+        ));
 
         // Spawn the main camera.
         app.add_systems(Startup, spawn_camera);
+        app.add_systems(Update, update_pan_orbit_camera);
 
         // Add other plugins.
         app.add_plugins((

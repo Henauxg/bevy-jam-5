@@ -31,7 +31,6 @@ pub(super) fn plugin(app: &mut App) {
             // Debug rendering
             debug_draw_dummy_slots,
             // Debug camera controls
-            update_pan_orbit_camera,
             display_pan_orbit_camera_state.run_if(input_just_pressed(KeyCode::KeyC)),
         ),
     );
