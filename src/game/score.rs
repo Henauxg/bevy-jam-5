@@ -4,7 +4,10 @@ use crate::screen::Screen;
 use crate::ui::prelude::*;
 use bevy::{
     app::{App, Update},
-    color::{palettes::css::ORANGE, Alpha, Color},
+    color::{
+        palettes::css::{BLUE, GREEN, RED},
+        Alpha, Color,
+    },
     math::Vec3,
     prelude::{
         in_state, BuildChildren, Commands, Component, DespawnRecursiveExt, Entity, Event,
@@ -31,11 +34,14 @@ pub const INITIAL_DIFFICULTY_FACTOR: f32 = 1.;
 pub const MAX_DIFFICULTY_FACTOR: f32 = 2.;
 pub const DIFFICULTY_FACTOR_PER_SEC: f32 = 0.01;
 
-pub const SCORE_BILLBOARDS_TEXT_DURATION_MS: u64 = 1750;
-pub const SCORE_BILLBOARD_TEXT_COLOR: Color = Color::Srgba(ORANGE);
-pub const SCORE_BILLBOARDS_TEXT_SIZE: f32 = 66.0;
-pub const SCORE_BILLBOARDS_FROM_DELTA: f32 = 2.5;
-pub const SCORE_BILLBOARDS_TO_DELTA: f32 = 4.5;
+pub const SCORE_BILLBOARDS_TEXT_DURATION_MS: u64 = 1850;
+pub const SCORE_BILLBOARD_TEXT_COLOR_BAD: Color = Color::Srgba(RED);
+pub const SCORE_BILLBOARD_TEXT_COLOR_GOOD: Color = Color::Srgba(BLUE);
+pub const SCORE_BILLBOARD_TEXT_COLOR_PERFECT: Color = Color::Srgba(GREEN);
+pub const SCORE_BILLBOARDS_TEXT_SIZE: f32 = 60.0;
+pub const SCORE_BILLBOARDS_SCALE: f32 = 0.03;
+pub const SCORE_BILLBOARDS_FROM_DELTA: f32 = 4.;
+pub const SCORE_BILLBOARDS_TO_DELTA: f32 = 8.;
 
 #[derive(Resource, Reflect, Clone)]
 pub struct Score {
@@ -87,10 +93,13 @@ pub fn handle_score_actions(
     font_handles: Res<HandleMap<FontKey>>,
 ) {
     let score_action = &trigger.event();
-    let score_action_raw_value = match score_action.action {
-        ScoreActionType::Bad => DEFAULT_BAD_ACTION_SCORE,
-        ScoreActionType::Good => DEFAULT_GOOD_ACTION_SCORE,
-        ScoreActionType::Perfect => DEFAULT_PERFECT_ACTION_SCORE,
+    let (score_action_raw_value, billboard_text_color) = match score_action.action {
+        ScoreActionType::Bad => (DEFAULT_BAD_ACTION_SCORE, SCORE_BILLBOARD_TEXT_COLOR_BAD),
+        ScoreActionType::Good => (DEFAULT_GOOD_ACTION_SCORE, SCORE_BILLBOARD_TEXT_COLOR_GOOD),
+        ScoreActionType::Perfect => (
+            DEFAULT_PERFECT_ACTION_SCORE,
+            SCORE_BILLBOARD_TEXT_COLOR_PERFECT,
+        ),
     };
     let difficulty_factor = MAX_DIFFICULTY_FACTOR.min(
         INITIAL_DIFFICULTY_FACTOR + difficulty.time_elapsed_s as f32 * DIFFICULTY_FACTOR_PER_SEC,
@@ -122,25 +131,27 @@ pub fn handle_score_actions(
         },
     );
     let fade_color = Tween::new(
-        EaseFunction::QuarticOut,
+        EaseFunction::ExponentialIn,
         Duration::from_millis(SCORE_BILLBOARDS_TEXT_DURATION_MS),
         TextColorLens {
-            start: SCORE_BILLBOARD_TEXT_COLOR,
-            end: SCORE_BILLBOARD_TEXT_COLOR.with_alpha(0.),
+            start: billboard_text_color,
+            end: billboard_text_color.with_alpha(0.),
             section: 0,
         },
     );
     commands.spawn((
         StateScoped(Screen::Playing),
         BillboardTextBundle {
-            transform: Transform::from_translation(score_action.pos + 2. * Vec3::Y)
-                .with_scale(Vec3::splat(0.0085)),
+            transform: Transform::from_translation(
+                score_action.pos + SCORE_BILLBOARDS_FROM_DELTA * Vec3::Y,
+            )
+            .with_scale(Vec3::splat(SCORE_BILLBOARDS_SCALE)),
             text: Text::from_sections([TextSection {
                 value: action_text,
                 style: TextStyle {
                     font_size: SCORE_BILLBOARDS_TEXT_SIZE,
                     font: font.clone_weak(),
-                    color: SCORE_BILLBOARD_TEXT_COLOR,
+                    color: billboard_text_color,
                     ..Default::default()
                 },
             }]),
