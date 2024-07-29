@@ -20,15 +20,11 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn enter_playing(mut commands: Commands, mut next_arena_mode: ResMut<NextState<ArenaMode>>) {
+fn enter_playing(mut commands: Commands) {
     commands.trigger(SpawnPlayer {
         pos: DEFAULT_GLADIATOR_POS,
         looking_at: DEFAULT_GLADIATOR_LOOK_AT,
     });
-
-    let random_arena_mode: ArenaMode = rand::random();
-    next_arena_mode.set(random_arena_mode);
-
     // commands.trigger(PlaySoundtrack::Key(SoundtrackKey::Gameplay));
 }
 

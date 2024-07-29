@@ -232,7 +232,7 @@ pub struct HighscoreText;
 pub struct DifficultyTimerText;
 
 pub fn setup_score_ui(mut commands: Commands, font_handles: Res<HandleMap<FontKey>>) {
-    let font = font_handles.get(&FontKey::RomanSD).unwrap().clone();
+    let font = font_handles.get(&DEFAULT_FONT_KEY).unwrap().clone();
     commands
         .bottom_ui_root()
         .insert(StateScoped(Screen::Playing))

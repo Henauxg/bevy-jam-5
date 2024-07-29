@@ -10,8 +10,8 @@ pub const GLADIATOR_ASSETS_SCALE: f32 = 0.0275;
 pub const DEFAULT_FONT_KEY: FontKey = FontKey::Augustus;
 
 pub(super) fn plugin(app: &mut App) {
-    // app.register_type::<HandleMap<ImageKey>>();
-    // app.init_resource::<HandleMap<ImageKey>>();
+    app.register_type::<HandleMap<ImageKey>>();
+    app.init_resource::<HandleMap<ImageKey>>();
 
     app.register_type::<HandleMap<SfxKey>>();
     app.init_resource::<HandleMap<SfxKey>>();
@@ -32,30 +32,39 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<HandleMap<FontKey>>();
 }
 
-// #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
-// pub enum ImageKey {
-//     Ducky,
-// }
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum ImageKey {
+    Sword,
+    Shield,
+    SwordAndShield,
+}
 
-// impl AssetKey for ImageKey {
-//     type Asset = Image;
-// }
+impl AssetKey for ImageKey {
+    type Asset = Image;
+}
 
-// impl FromWorld for HandleMap<ImageKey> {
-//     fn from_world(world: &mut World) -> Self {
-//         let asset_server = world.resource::<AssetServer>();
-//         [(
-//             ImageKey::Ducky,
-//             asset_server.load_with_settings(
-//                 "images/ducky.png",
-//                 |settings: &mut ImageLoaderSettings| {
-//                     settings.sampler = ImageSampler::nearest();
-//                 },
-//             ),
-//         )]
-//         .into()
-//     }
-// }
+impl FromWorld for HandleMap<ImageKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (
+                ImageKey::Sword,
+                asset_server.load(
+                    "images/sword.png",
+                    // |settings: &mut ImageLoaderSettings| {
+                    //     settings.sampler = ImageSampler::nearest();
+                    // },
+                ),
+            ),
+            (ImageKey::Shield, asset_server.load("images/shield.png")),
+            (
+                ImageKey::SwordAndShield,
+                asset_server.load("images/sword_n_shield.png"),
+            ),
+        ]
+        .into()
+    }
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum FontKey {
@@ -394,7 +403,7 @@ pub fn process_shield_asset(
 
 pub fn all_assets_loaded(
     asset_server: Res<AssetServer>,
-    // image_handles: Res<HandleMap<ImageKey>>,
+    image_handles: Res<HandleMap<ImageKey>>,
     sfx_handles: Res<HandleMap<SfxKey>>,
     soundtrack_handles: Res<HandleMap<SoundtrackKey>>,
     gltf_handles: Res<HandleMap<GltfKey>>,
@@ -402,8 +411,8 @@ pub fn all_assets_loaded(
     animation_handles: Res<HandleMap<AnimationKey>>,
     font_handles: Res<HandleMap<FontKey>>,
 ) -> bool {
-    // image_handles.all_loaded(&asset_server)
-    sfx_handles.all_loaded(&asset_server)
+    image_handles.all_loaded(&asset_server)
+        && sfx_handles.all_loaded(&asset_server)
         && soundtrack_handles.all_loaded(&asset_server)
         && gltf_handles.all_loaded(&asset_server)
         && scene_handles.all_loaded(&asset_server)

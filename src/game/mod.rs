@@ -6,6 +6,7 @@ pub mod arena;
 pub mod assets;
 pub mod audio;
 pub mod camera;
+pub mod cycle;
 pub mod player_animation;
 pub mod score;
 pub mod shattering;
@@ -24,5 +25,6 @@ pub(super) fn plugin(app: &mut App) {
         score::plugin,
         player_animation::plugin,
         shattering::plugin,
+        cycle::plugin,
     ));
 }
