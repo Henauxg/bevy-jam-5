@@ -117,7 +117,7 @@ impl EquipmentSlot {
     }
 }
 
-#[derive(Component, Clone, Reflect)]
+#[derive(Component, Debug, Clone, Reflect)]
 pub struct EquipmentToAttach {
     pub slot: EquipmentSlot,
 }

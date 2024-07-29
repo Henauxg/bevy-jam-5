@@ -13,7 +13,7 @@ use crate::game::{
     spawn::{player::Player, shield::Shield},
 };
 
-pub const SHATTER_IMPULSE_FACTOR: f32 = 0.25;
+pub const SHATTER_IMPULSE_FACTOR: f32 = 2.;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(

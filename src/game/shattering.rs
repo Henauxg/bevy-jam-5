@@ -19,11 +19,14 @@ use bevy_rapier3d::prelude::{
     ActiveCollisionTypes, Collider, ColliderMassProperties, ComputedColliderShape, ExternalImpulse,
     Friction, Restitution, RigidBody,
 };
+use rand::Rng;
 
 use crate::{screen::Screen, AppSet};
 
 pub const SHARDS_DESPAWN_DELAY_MS: u64 = 3000;
 pub const SHATTER_ITERATION_COUNT: u32 = 6;
+pub const FIXED_MIN_SHARD_MASS: f32 = 0.04;
+pub const FIXED_MAX_SHARD_MASS: f32 = 0.08;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, ((despawn_shards).in_set(AppSet::Update),));
@@ -80,11 +83,11 @@ fn shatter_entity(
         else {
             continue;
         };
-        // let Some(aabb) = shard_mesh.compute_aabb() else {
-        //     continue;
-        // };
         let mesh_handle = meshes_assets.add(shard_mesh.clone());
-        //   let shard_entity =
+
+        let mut rng = rand::thread_rng();
+        let shard_mass = rng.gen_range(FIXED_MIN_SHARD_MASS..FIXED_MAX_SHARD_MASS);
+
         let shard_entity = commands
             .spawn((
                 Name::new("Shard"),
@@ -101,7 +104,7 @@ fn shatter_entity(
                 ActiveCollisionTypes::default(),
                 Friction::coefficient(0.7),
                 Restitution::coefficient(0.05),
-                ColliderMassProperties::Density(2.0),
+                ColliderMassProperties::Mass(shard_mass),
                 // Logic
                 Shard {
                     despawn_timer: Timer::new(
