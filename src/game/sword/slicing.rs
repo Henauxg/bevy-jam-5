@@ -11,7 +11,7 @@ use bevy::{
     prelude::{
         default, Camera, Commands, Component, Entity, Event, Gizmos, GlobalTransform,
         IntoSystemConfigs, Mesh, MouseButton, Query, Res, ResMut, Resource, StateScoped, Transform,
-        Trigger, With, Without,
+        TransformPoint, Trigger, With, Without,
     },
     reflect::Reflect,
     time::{Time, Timer, TimerMode},
@@ -34,6 +34,13 @@ use crate::{
 
 pub const PLAYER_SLICE_FRAGMENTATION_DELAY_MS: u64 = 85;
 pub const SLICED_FRAGMENTS_SHATTER_DELAY_MS: u64 = 2000;
+
+/// Impulse to force the fragments appart, more satisfying
+pub const FRAGMENTS_SEPARATION_IMPULSE_FACTOR: f32 = 12.;
+pub const FRAGMENTS_SLICE_DIRECTION_IMPULSE_FACTOR: f32 = 11.;
+pub const FRAGMENTS_TORQUE_IMPULSE_FACTOR: f32 = 3.;
+
+pub const DUMMY_FRAGMENT_FRICTION: f32 = 1.;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Sliceable>();
@@ -283,11 +290,6 @@ fn dequeue_fragmentations(
     }
 }
 
-/// Impulse to force the fragments appart, more satisfying
-pub const FRAGMENTS_SEPARATION_IMPULSE_FACTOR: f32 = 2750.; // 3000
-pub const FRAGMENTS_SLICE_DIRECTION_IMPULSE_FACTOR: f32 = 225000.;
-pub const FRAGMENTS_TORQUE_IMPULSE_FACTOR: f32 = 150000000.;
-
 fn slice_entity(
     trigger: Trigger<SliceEntity>,
     mut commands: Commands,
@@ -331,13 +333,13 @@ fn slice_entity(
                     material: mat_handle.clone(),
                     ..default()
                 },
-                // TODO May make it sliceable again
+                // TODO Could make it sliceable again
                 // Sliceable,
                 // Physics
                 RigidBody::Dynamic,
                 collider,
                 ActiveCollisionTypes::default(),
-                Friction::coefficient(0.7),
+                Friction::coefficient(DUMMY_FRAGMENT_FRICTION),
                 Restitution::coefficient(0.05),
                 ColliderMassProperties::Density(2.0),
                 // Logic
@@ -345,19 +347,20 @@ fn slice_entity(
             ))
             .id();
 
-        let frag_center: Vec3 = aabb.center.into();
-        let separating_impulse =
-            FRAGMENTS_SEPARATION_IMPULSE_FACTOR * (frag_center - fragments_info.slice_positions.0);
+        let slice_center =
+            (fragments_info.slice_positions.0 + fragments_info.slice_positions.1) / 2.;
+        let local_slice_center = fragments_info
+            .sliced_object_transform
+            .compute_matrix()
+            .inverse()
+            .transform_point(slice_center);
+        let local_frag_center: Vec3 = aabb.center.into();
+        let separating_impulse = FRAGMENTS_SEPARATION_IMPULSE_FACTOR
+            * (local_frag_center - local_slice_center).normalize();
 
         let slice_direction =
             (fragments_info.slice_positions.1 - fragments_info.slice_positions.0).normalize();
         let slice_direction_impulse = slice_direction * FRAGMENTS_SLICE_DIRECTION_IMPULSE_FACTOR;
-
-        // let torque_impulse = (fragments_info.slice_positions.0 - DEFAULT_GLADIATOR_POS).normalize()
-        //     * FRAGMENTS_TORQUE_IMPULSE_FACTOR;
-        // fragments_info.sliced_object_transform.right();
-
-        // let dummy_vector = (fragments_info.slice_positions.0 - DEFAULT_GLADIATOR_POS).normalize();
 
         let torque_impulse =
             fragments_info.sliced_object_transform.right() * FRAGMENTS_TORQUE_IMPULSE_FACTOR;

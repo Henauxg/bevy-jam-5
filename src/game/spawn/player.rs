@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::{
-    ActiveCollisionTypes, ColliderMassProperties, Friction, Restitution, RigidBody,
+    ActiveCollisionTypes, Collider, ColliderMassProperties, Friction, Restitution,
 };
 
 use crate::{
@@ -9,6 +9,9 @@ use crate::{
 };
 
 use super::helmet::SpawnHelmet;
+
+pub const GLADIATOR_HEIGHT: f32 = 3.;
+pub const GLADIATOR_HALF_WIDTH: f32 = 0.7;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_player);
@@ -28,8 +31,10 @@ pub struct Player;
 fn spawn_player(
     trigger: Trigger<SpawnPlayer>,
     mut commands: Commands,
+    // cached_data: Res<GladiatorCachedData>,
     scenes_handles: Res<HandleMap<SceneKey>>,
 ) {
+    let collider = Collider::capsule_y(GLADIATOR_HEIGHT, GLADIATOR_HALF_WIDTH);
     let spawn_info = trigger.event();
     commands.spawn((
         Name::new("Gladiator"),
@@ -44,6 +49,7 @@ fn spawn_player(
         // Physic
         // RigidBody::KinematicPositionBased,
         // cached_data.collider.clone(),
+        collider,
         ActiveCollisionTypes::default(),
         Friction::coefficient(0.7),
         Restitution::coefficient(0.05),

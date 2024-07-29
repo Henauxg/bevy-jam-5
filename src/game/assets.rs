@@ -3,6 +3,8 @@ use bevy_rapier3d::prelude::{Collider, ComputedColliderShape};
 
 use super::spawn::{dummy::DummyCachedData, jug::JugCachedData, shield::ShieldCachedData};
 
+pub const ASSETS_SCALE: f32 = 1.;
+
 pub(super) fn plugin(app: &mut App) {
     // app.register_type::<HandleMap<ImageKey>>();
     // app.init_resource::<HandleMap<ImageKey>>();
@@ -143,14 +145,14 @@ impl FromWorld for HandleMap<SoundtrackKey> {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum SceneKey {
-    Rock,
+    // Rock,
     Gladiator,
     Sword,
     Shield,
     Helmet,
     Dummy,
     Arena,
-    GroundDetails,
+    // GroundDetails,
 }
 
 impl AssetKey for SceneKey {
@@ -161,7 +163,7 @@ impl FromWorld for HandleMap<SceneKey> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         [
-            (SceneKey::Rock, asset_server.load("models/rock.glb#Scene0")),
+            // (SceneKey::Rock, asset_server.load("models/rock.glb#Scene0")),
             (
                 SceneKey::Gladiator,
                 asset_server.load("models/gladiator.glb#Scene0"),
@@ -186,10 +188,10 @@ impl FromWorld for HandleMap<SceneKey> {
                 SceneKey::Arena,
                 asset_server.load("models/arena.glb#Scene0"),
             ),
-            (
-                SceneKey::GroundDetails,
-                asset_server.load("models/ground.glb#Scene0"),
-            ),
+            // (
+            //     SceneKey::GroundDetails,
+            //     asset_server.load("models/ground.glb#Scene0"),
+            // ),
         ]
         .into()
     }
@@ -236,8 +238,6 @@ impl FromWorld for HandleMap<AnimationKey> {
         .into()
     }
 }
-
-pub const ASSETS_SCALE: f32 = 0.015;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum GltfKey {

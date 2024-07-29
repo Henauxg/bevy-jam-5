@@ -17,6 +17,8 @@ pub(super) fn plugin(app: &mut App) {
 pub const DEFAULT_GLADIATOR_POS: Vec3 = Vec3::new(0., 0., 0.0);
 pub const DEFAULT_GLADIATOR_LOOK_AT: Vec3 = Vec3::new(0., 0., 1.5);
 
+pub const GROUND_FRICTION: f32 = 1.;
+
 #[derive(Event, Debug)]
 pub struct SpawnArena;
 
@@ -62,7 +64,7 @@ fn spawn_arena(
     },));
 
     // Prototype ground
-    let radius = 2000.;
+    let radius = 1500.;
     let height = 20.;
     commands.spawn((
         Name::new("Ground"),
@@ -77,19 +79,19 @@ fn spawn_arena(
         },
         Collider::cylinder(height / 2., radius),
         (ActiveCollisionTypes::default()),
-        Friction::coefficient(0.7),
+        Friction::coefficient(GROUND_FRICTION),
         Restitution::coefficient(0.0),
     ));
 
-    commands.spawn((
-        Name::new("Ground details"),
-        SceneBundle {
-            scene: scenes_handles[&SceneKey::GroundDetails].clone_weak(),
-            transform: Transform::from_translation(Vec3::ZERO)
-                .with_scale(Vec3::splat(ASSETS_SCALE)),
-            ..default()
-        },
-    ));
+    // commands.spawn((
+    //     Name::new("Ground details"),
+    //     SceneBundle {
+    //         scene: scenes_handles[&SceneKey::GroundDetails].clone_weak(),
+    //         transform: Transform::from_translation(Vec3::ZERO)
+    //             .with_scale(Vec3::splat(ASSETS_SCALE)),
+    //         ..default()
+    //     },
+    // ));
 
     // Arena
     commands.spawn((

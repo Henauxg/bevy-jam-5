@@ -21,7 +21,7 @@ use crate::game::{
     },
 };
 
-pub const JUG_SPAWN_RADIUS: f32 = 12.;
+pub const JUG_SPAWN_RADIUS: f32 = 25.;
 pub const JUG_THROWERS_POSITIONS: [Vec3; 8] = [
     Vec3::new(-JUG_SPAWN_RADIUS, 0., 0.),
     Vec3::new(JUG_SPAWN_RADIUS, 0., 0.),

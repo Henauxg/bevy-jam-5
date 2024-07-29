@@ -53,7 +53,7 @@ fn shatter_entity(
     let shatter_info = trigger.event();
 
     // Despawn the entity
-    commands.entity(shatter_info.entity).despawn();
+    commands.entity(shatter_info.entity).despawn_recursive();
 
     let Ok((transform, mat_handle, mesh_handle)) = shattered_entity_query.get(shatter_info.entity)
     else {

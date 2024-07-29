@@ -33,7 +33,7 @@ pub const DIFFICULTY_FACTOR_PER_SEC: f32 = 0.01;
 
 pub const SCORE_BILLBOARDS_TEXT_DURATION_MS: u64 = 1750;
 pub const SCORE_BILLBOARD_TEXT_COLOR: Color = Color::Srgba(ORANGE);
-pub const SCORE_BILLBOARDS_TEXT_SIZE: f32 = 60.0;
+pub const SCORE_BILLBOARDS_TEXT_SIZE: f32 = 66.0;
 pub const SCORE_BILLBOARDS_FROM_DELTA: f32 = 2.5;
 pub const SCORE_BILLBOARDS_TO_DELTA: f32 = 4.5;
 
@@ -100,7 +100,7 @@ pub fn handle_score_actions(
         (value, format!("+{}", value))
     } else {
         let value = (score_action_raw_value * difficulty_factor) as i32;
-        (value, format!("-{}", value))
+        (value, format!("{}", value))
     };
 
     score.current += rounded_action_value;

@@ -6,8 +6,8 @@ use bevy::{
     ecs::component::StorageType,
     math::Vec3,
     prelude::{
-        in_state, Children, Commands, Component, Entity, Event, Gizmos, IntoSystemConfigs, OnEnter,
-        OnExit, Query, Res, ResMut, Resource, StateScoped, Transform, Trigger, With, Without,
+        in_state, Children, Commands, Component, Entity, Event, Gizmos, IntoSystemConfigs, Query,
+        Res, ResMut, Resource, StateScoped, Transform, Trigger, With, Without,
     },
     reflect::Reflect,
     time::{Time, Timer, TimerMode},
@@ -17,10 +17,7 @@ use rand::Rng;
 
 use crate::game::{
     arena::ArenaMode,
-    spawn::{
-        dummy::{Dummy, SpawnDummy},
-        sword::SpawnSword,
-    },
+    spawn::dummy::{Dummy, SpawnDummy},
 };
 
 use super::slicing::SliceEvent;
@@ -101,23 +98,6 @@ impl Component for DummySlot {
         // });
     }
 }
-
-// pub fn on_enter_sword_mode(mut commands: Commands) {
-//     commands.insert_resource({
-//         DummiesData {
-//             spawn_timer: Timer::new(
-//                 Duration::from_millis(DUMMIES_SPAWN_TIMER_MS),
-//                 TimerMode::Once,
-//             ),
-//             max_dummy_count: MAX_DUMMIES_COUNT,
-//             ..Default::default()
-//         }
-//     });
-// }
-
-// pub fn on_exit_sword_mode(mut commands: Commands) {
-//     commands.remove_resource::<DummiesData>();
-// }
 
 #[derive(Event, Debug)]
 pub struct SpawnDummySlots;

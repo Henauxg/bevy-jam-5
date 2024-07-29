@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::{
-    ActiveCollisionTypes, Collider, ColliderMassProperties, Friction, Restitution, RigidBody,
+    ActiveCollisionTypes, Collider, ColliderMassProperties, Friction, Restitution,
 };
 
 use crate::game::{

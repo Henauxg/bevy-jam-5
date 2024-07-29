@@ -11,6 +11,8 @@ use crate::{
 
 use super::arena::DEFAULT_GLADIATOR_POS;
 
+pub const JUG_THROW_IMPULSE_FACTOR: f32 = 20.;
+
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_jug);
     app.register_type::<Jug>();
@@ -53,7 +55,7 @@ fn spawn_jug(
     let jug_throw = trigger.event();
     let jug_entity = commands
         .spawn((
-            Name::new("Dummy"),
+            Name::new("Jug"),
             StateScoped(Screen::Playing),
             PbrBundle {
                 mesh: mesh_handle.clone(),
@@ -80,9 +82,10 @@ fn spawn_jug(
         // .observe(shatter_jug)
         .id();
 
+    let impulse = JUG_THROW_IMPULSE_FACTOR * (jug_throw.target - jug_throw.pos).normalize();
     // TODO Impulse/force/kinematic movmeent to target
     commands.entity(jug_entity).insert(ExternalImpulse {
-        impulse: 250000. * (jug_throw.target - jug_throw.pos),
+        impulse,
         torque_impulse: Vec3::ZERO,
     });
 }
