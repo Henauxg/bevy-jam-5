@@ -61,9 +61,9 @@ fn enter_title(
         return;
     };
     cam_state.center = Vec3::ZERO;
-    cam_state.radius = 25.68;
-    cam_state.pitch = -0.28100345;
-    cam_state.yaw = -0.7212212;
+    cam_state.radius = 51.71328;
+    cam_state.pitch = -0.3002041;
+    cam_state.yaw = 0.5580911;
 
     cam_settings.auto_orbit = true;
 }
