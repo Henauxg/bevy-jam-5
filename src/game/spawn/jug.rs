@@ -1,7 +1,7 @@
 use bevy::{gltf::GltfMesh, prelude::*};
 use bevy_rapier3d::prelude::{
-    ActiveCollisionTypes, Collider, ColliderMassProperties, ExternalImpulse, Friction, Restitution,
-    RigidBody,
+    ActiveCollisionTypes, ActiveEvents, Collider, ColliderMassProperties, ExternalImpulse,
+    Friction, Restitution, RigidBody,
 };
 
 use crate::{
@@ -72,9 +72,12 @@ fn spawn_jug(
             Friction::coefficient(0.7),
             Restitution::coefficient(0.05),
             ColliderMassProperties::Density(2.0),
+            ActiveEvents::COLLISION_EVENTS,
             // Logic
             Jug,
         ))
+        // // TODO Could share the observer between all the jugs
+        // .observe(shatter_jug)
         .id();
 
     // TODO Impulse/force/kinematic movmeent to target
@@ -83,3 +86,10 @@ fn spawn_jug(
         torque_impulse: Vec3::ZERO,
     });
 }
+
+// #[derive(Event, Debug)]
+// pub struct ShatterJug;
+
+// fn shatter_jug(shatter_event: Trigger<ShatterJug>) {
+
+// }

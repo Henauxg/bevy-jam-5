@@ -127,13 +127,13 @@ fn attach_equipments(
     players_query: Query<Entity, With<Player>>,
     names_query: Query<&Name>,
     children_query: Query<&Children>,
-    equipments_to_attach_query: Query<(Entity, &EquipmentToAttach)>,
+    mut equipments_to_attach_query: Query<(Entity, &EquipmentToAttach)>,
 ) {
     let Ok(player_entity) = players_query.get_single() else {
         return;
     };
 
-    for (equipment_entity, equipment) in equipments_to_attach_query.iter() {
+    for (equipment_entity, equipment) in equipments_to_attach_query.iter_mut() {
         let attach_point_entity = find_child_with_name_containing(
             player_entity,
             equipment.slot.to_name(),

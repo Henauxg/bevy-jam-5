@@ -8,7 +8,7 @@ use crate::{
     game::{
         assets::{
             all_assets_loaded, all_assets_processed, process_dummy_asset, process_jug_asset,
-            AssetsProcessing,
+            process_shield_asset, AssetsProcessing,
         },
         spawn::arena::SpawnArena,
     },
@@ -21,7 +21,8 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            (process_jug_asset, process_dummy_asset).run_if(in_state(Screen::Loading)),
+            (process_jug_asset, process_dummy_asset, process_shield_asset)
+                .run_if(in_state(Screen::Loading)),
             continue_to_title.run_if(
                 in_state(Screen::Loading)
                     .and_then(all_assets_processed)

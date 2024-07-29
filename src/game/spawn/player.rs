@@ -1,4 +1,7 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::{
+    ActiveCollisionTypes, ColliderMassProperties, Friction, Restitution, RigidBody,
+};
 
 use crate::{
     game::assets::{HandleMap, SceneKey, ASSETS_SCALE},
@@ -38,6 +41,14 @@ fn spawn_player(
                 .with_scale(Vec3::splat(ASSETS_SCALE)),
             ..default()
         },
+        // Physic
+        // RigidBody::KinematicPositionBased,
+        // cached_data.collider.clone(),
+        ActiveCollisionTypes::default(),
+        Friction::coefficient(0.7),
+        Restitution::coefficient(0.05),
+        ColliderMassProperties::Density(2.0),
+        // Logic
         Player,
     ));
 

@@ -1,7 +1,7 @@
 use bevy::{gltf::GltfMesh, prelude::*, utils::HashMap};
 use bevy_rapier3d::prelude::{Collider, ComputedColliderShape};
 
-use super::spawn::{dummy::DummyCachedData, jug::JugCachedData};
+use super::spawn::{dummy::DummyCachedData, jug::JugCachedData, shield::ShieldCachedData};
 
 pub(super) fn plugin(app: &mut App) {
     // app.register_type::<HandleMap<ImageKey>>();
@@ -241,9 +241,10 @@ pub const ASSETS_SCALE: f32 = 0.015;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum GltfKey {
-    Rock,
-    Gladiator,
+    // Rock,
+    // Gladiator,
     Dummy,
+    Shield,
     Jug1,
     Jug2,
     Jug3,
@@ -259,11 +260,12 @@ impl FromWorld for HandleMap<GltfKey> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         [
-            (GltfKey::Rock, asset_server.load("models/rock.glb")),
-            (
-                GltfKey::Gladiator,
-                asset_server.load("models/gladiator.glb"),
-            ),
+            // (GltfKey::Rock, asset_server.load("models/rock.glb")),
+            // (
+            //     GltfKey::Gladiator,
+            //     asset_server.load("models/gladiator.glb"),
+            // ),
+            (GltfKey::Shield, asset_server.load("models/shield.glb")),
             (GltfKey::Dummy, asset_server.load("models/dummy.glb")),
             (GltfKey::Jug1, asset_server.load("models/jug1.glb")),
             (GltfKey::Jug2, asset_server.load("models/jug2.glb")),
@@ -304,6 +306,7 @@ impl<K: AssetKey> HandleMap<K> {
 pub struct AssetsProcessing {
     pub dummy: bool,
     pub jugs: bool,
+    pub shield: bool,
 }
 
 pub fn process_dummy_asset(
@@ -360,6 +363,33 @@ pub fn process_jug_asset(
     assets_processing.jugs = true;
 }
 
+pub fn process_shield_asset(
+    mut commands: Commands,
+    gltf_handles: Res<HandleMap<GltfKey>>,
+    assets_gltf: Res<Assets<Gltf>>,
+    assets_gltfmesh: Res<Assets<GltfMesh>>,
+    meshes: ResMut<Assets<Mesh>>,
+    mut assets_processing: ResMut<AssetsProcessing>,
+) {
+    let gltf_handle = &gltf_handles[&GltfKey::Shield];
+    let Some(gltf) = assets_gltf.get(gltf_handle) else {
+        return;
+    };
+    let Some(gltf_mesh) = assets_gltfmesh.get(&gltf.meshes[0]) else {
+        return;
+    };
+    let mesh_handle = &gltf_mesh.primitives[0].mesh;
+    let Some(mesh) = meshes.get(mesh_handle) else {
+        return;
+    };
+
+    let Some(collider) = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::ConvexHull) else {
+        return;
+    };
+    commands.insert_resource(ShieldCachedData { collider });
+    assets_processing.shield = true;
+}
+
 pub fn all_assets_loaded(
     asset_server: Res<AssetServer>,
     // image_handles: Res<HandleMap<ImageKey>>,
@@ -379,6 +409,7 @@ pub fn all_assets_loaded(
         && font_handles.all_loaded(&asset_server)
 }
 
+// Quick &  dirty
 pub fn all_assets_processed(assets_processing: Res<AssetsProcessing>) -> bool {
-    assets_processing.dummy && assets_processing.jugs
+    assets_processing.dummy && assets_processing.jugs && assets_processing.shield
 }

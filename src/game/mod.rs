@@ -8,6 +8,7 @@ pub mod audio;
 pub mod camera;
 pub mod player_animation;
 pub mod score;
+pub mod shattering;
 pub mod shield;
 pub mod spawn;
 pub mod sword;
@@ -22,5 +23,6 @@ pub(super) fn plugin(app: &mut App) {
         arena::plugin,
         score::plugin,
         player_animation::plugin,
+        shattering::plugin,
     ));
 }
