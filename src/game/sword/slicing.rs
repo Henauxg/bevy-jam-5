@@ -9,9 +9,9 @@ use bevy::{
     math::{Vec3, Vec3A},
     pbr::{PbrBundle, StandardMaterial},
     prelude::{
-        default, Camera, Commands, Component, Entity, Event, GlobalTransform, IntoSystemConfigs,
-        Mesh, MouseButton, Query, Res, ResMut, Resource, StateScoped, Transform, TransformPoint,
-        Trigger, With, Without,
+        default, Camera, Commands, Component, DespawnRecursiveExt, Entity, Event, GlobalTransform,
+        IntoSystemConfigs, Mesh, MouseButton, Query, Res, ResMut, Resource, StateScoped, Transform,
+        TransformPoint, Trigger, With, Without,
     },
     reflect::Reflect,
     time::{Time, Timer, TimerMode},
@@ -301,7 +301,9 @@ fn slice_entity(
     let fragments_info = trigger.event();
 
     // Despawn the fragmented entity
-    commands.entity(fragments_info.sliced_entity).despawn();
+    commands
+        .entity(fragments_info.sliced_entity)
+        .despawn_recursive();
 
     // Spawn the fragments
     let gltf_handle = &gltf_handles[&GltfKey::Dummy];
