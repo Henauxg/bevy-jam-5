@@ -18,6 +18,7 @@ use rand::Rng;
 
 use crate::game::{
     arena::ArenaMode,
+    cycle::Cycle,
     score::{ScoreAction, ScoreActionType},
     spawn::dummy::{Dummy, SpawnDummy},
 };
@@ -152,6 +153,7 @@ fn free_killed_dummies_slots(time: Res<Time>, mut dummies: ResMut<DummiesModeDat
 fn spawn_dummies(
     mut commands: Commands,
     time: Res<Time>,
+    cycle: Res<Cycle>,
     mut dummies_mode: ResMut<DummiesModeData>,
     dummy_slots_query: Query<&Transform, (With<DummySlot>, Without<Children>)>,
 ) {
@@ -172,6 +174,7 @@ fn spawn_dummies(
         commands.trigger(SpawnDummy {
             pos: slot.translation,
             slot_index: free_slot_index,
+            scope: cycle.current_mode,
         });
         let mut rng = rand::thread_rng();
         let next_spawn_delay =

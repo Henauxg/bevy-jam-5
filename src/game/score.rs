@@ -24,7 +24,10 @@ use bevy_tweening::{
     Animator, EaseFunction, Tween,
 };
 
-use super::assets::{FontKey, HandleMap, DEFAULT_FONT_KEY};
+use super::{
+    assets::{FontKey, HandleMap, DEFAULT_FONT_KEY},
+    cycle::Cycle,
+};
 
 pub const DEFAULT_BAD_ACTION_SCORE: f32 = -5.;
 pub const DEFAULT_GOOD_ACTION_SCORE: f32 = 10.;
@@ -110,6 +113,7 @@ pub struct ScoreAction {
 pub fn handle_score_actions(
     trigger: Trigger<ScoreAction>,
     mut commands: Commands,
+    cycle: Res<Cycle>,
     mut score: ResMut<Score>,
     difficulty: ResMut<Difficulty>,
     font_handles: Res<HandleMap<FontKey>>,
@@ -163,7 +167,7 @@ pub fn handle_score_actions(
     let billboard_scale = (cam_transform.translation - score_action.pos).length() / 80.
         * Vec3::splat(SCORE_BILLBOARDS_SCALE);
     commands.spawn((
-        StateScoped(Screen::Playing),
+        StateScoped(cycle.current_mode),
         BillboardTextBundle {
             transform: Transform::from_scale(billboard_scale),
             text: Text::from_sections([TextSection {

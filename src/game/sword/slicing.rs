@@ -9,9 +9,9 @@ use bevy::{
     math::{Vec3, Vec3A},
     pbr::{PbrBundle, StandardMaterial},
     prelude::{
-        default, Camera, Commands, Component, Entity, Event, Gizmos, GlobalTransform,
-        IntoSystemConfigs, Mesh, MouseButton, Query, Res, ResMut, Resource, StateScoped, Transform,
-        TransformPoint, Trigger, With, Without,
+        default, Camera, Commands, Component, Entity, Event, GlobalTransform, IntoSystemConfigs,
+        Mesh, MouseButton, Query, Res, ResMut, Resource, StateScoped, Transform, TransformPoint,
+        Trigger, With, Without,
     },
     reflect::Reflect,
     time::{Time, Timer, TimerMode},
@@ -127,7 +127,7 @@ fn detect_slices(
     cursor_ray: Res<CursorRay>,
     mut slicer_state: ResMut<SlicerState>,
     mut raycast: Raycast,
-    mut gizmos: Gizmos,
+    // mut gizmos: Gizmos,
     sliceables_query: Query<(), With<Sliceable>>,
 ) {
     let Some(cursor_ray) = cursor_ray.0 else {

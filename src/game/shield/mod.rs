@@ -25,7 +25,9 @@ pub(super) fn plugin(app: &mut App) {
 
 pub fn on_enter_shield_mode(mut commands: Commands) {
     commands.insert_resource(ThrowersData::default());
-    commands.trigger(SpawnShield);
+    commands.trigger(SpawnShield {
+        scope: ArenaMode::Shield,
+    });
     commands.trigger(SpawnJugThrowers);
     commands.trigger(SetShieldModeCamera);
 }

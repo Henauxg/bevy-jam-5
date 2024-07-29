@@ -4,9 +4,9 @@ use bevy_rapier3d::prelude::{
     Friction, Restitution, RigidBody,
 };
 
-use crate::{
-    game::assets::{GltfKey, HandleMap, ASSETS_SCALE},
-    screen::Screen,
+use crate::game::{
+    arena::ArenaMode,
+    assets::{GltfKey, HandleMap, ASSETS_SCALE},
 };
 
 use super::arena::DEFAULT_GLADIATOR_POS;
@@ -22,6 +22,7 @@ pub(super) fn plugin(app: &mut App) {
 pub struct SpawnJug {
     pub pos: Vec3,
     pub target: Vec3,
+    pub scope: ArenaMode,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
@@ -56,7 +57,7 @@ fn spawn_jug(
     let jug_entity = commands
         .spawn((
             Name::new("Jug"),
-            StateScoped(Screen::Playing),
+            StateScoped(trigger.event().scope),
             PbrBundle {
                 mesh: mesh_handle.clone(),
                 material: mat_handle.clone(),

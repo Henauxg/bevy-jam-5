@@ -8,6 +8,7 @@ use bevy_tweening::{lens::TransformPositionLens, Animator, EaseFunction, Tween};
 
 use crate::{
     game::{
+        arena::ArenaMode,
         assets::{GltfKey, HandleMap, ASSETS_SCALE},
         sword::slicing::Sliceable,
     },
@@ -33,6 +34,7 @@ pub(super) fn plugin(app: &mut App) {
 pub struct SpawnDummy {
     pub pos: Vec3,
     pub slot_index: usize,
+    pub scope: ArenaMode,
 }
 
 #[derive(Component, Debug, Clone, PartialEq, Eq, Default, Reflect)]
@@ -80,7 +82,7 @@ fn spawn_dummy(
 
     commands.spawn((
         Name::new("Dummy"),
-        StateScoped(Screen::Playing),
+        StateScoped(spawn_info.scope),
         PbrBundle {
             mesh: mesh_handle.clone(),
             // TODO Material

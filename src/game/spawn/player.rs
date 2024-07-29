@@ -4,7 +4,7 @@ use bevy_rapier3d::prelude::{
 };
 
 use crate::{
-    game::assets::{HandleMap, SceneKey, ASSETS_SCALE, GLADIATOR_ASSETS_SCALE},
+    game::assets::{HandleMap, SceneKey, GLADIATOR_ASSETS_SCALE},
     screen::Screen,
 };
 

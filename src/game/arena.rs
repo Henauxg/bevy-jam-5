@@ -12,7 +12,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_sub_state::<ArenaMode>();
 }
 
-#[derive(SubStates, Default, Reflect, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(SubStates, Default, Reflect, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 #[source(Screen = Screen::Playing)]
 pub enum ArenaMode {
     #[default]

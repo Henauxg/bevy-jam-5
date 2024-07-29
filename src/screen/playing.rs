@@ -1,12 +1,9 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use super::Screen;
-use crate::game::{
-    arena::ArenaMode,
-    spawn::{
-        arena::{DEFAULT_GLADIATOR_LOOK_AT, DEFAULT_GLADIATOR_POS},
-        player::SpawnPlayer,
-    },
+use crate::game::spawn::{
+    arena::{DEFAULT_GLADIATOR_LOOK_AT, DEFAULT_GLADIATOR_POS},
+    player::SpawnPlayer,
 };
 
 pub(super) fn plugin(app: &mut App) {

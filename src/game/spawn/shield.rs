@@ -15,7 +15,9 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Event, Debug)]
-pub struct SpawnShield;
+pub struct SpawnShield {
+    pub scope: ArenaMode,
+}
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 pub struct Shield;
@@ -26,14 +28,14 @@ pub struct ShieldCachedData {
 }
 
 fn spawn_shield(
-    _trigger: Trigger<SpawnShield>,
+    trigger: Trigger<SpawnShield>,
     mut commands: Commands,
     scenes_handles: Res<HandleMap<SceneKey>>,
     cached_data: Res<ShieldCachedData>,
 ) {
     commands.spawn((
         Name::new("Shield"),
-        StateScoped(ArenaMode::Shield),
+        StateScoped(trigger.event().scope),
         SceneBundle {
             scene: scenes_handles[&SceneKey::Shield].clone_weak(),
             transform: Transform::IDENTITY,

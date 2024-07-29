@@ -1,6 +1,9 @@
 use std::time::Duration;
 
-use crate::ui::widgets::{Containers, Widgets};
+use crate::{
+    ui::widgets::{Containers, Widgets},
+    AppSet,
+};
 use bevy::{
     app::{App, Update},
     prelude::{
@@ -29,17 +32,23 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (update_cycle, update_cycle_ui)
-            .chain()
+        update_cycle
+            .in_set(AppSet::TickTimers)
+            .run_if(in_state(Screen::Playing)),
+    );
+    app.add_systems(
+        Update,
+        update_cycle_ui
+            .in_set(AppSet::Update)
             .run_if(in_state(Screen::Playing)),
     );
 }
 
 #[derive(Resource, Debug, Reflect)]
 pub struct Cycle {
-    current_mode: ArenaMode,
-    next_mode: ArenaMode,
-    next_mode_timer: Timer,
+    pub current_mode: ArenaMode,
+    pub next_mode: ArenaMode,
+    pub next_mode_timer: Timer,
 }
 
 fn setup_cycle(mut commands: Commands, mut next_arena_mode: ResMut<NextState<ArenaMode>>) {
@@ -79,7 +88,7 @@ fn setup_cycle_ui(
         .insert(StateScoped(Screen::Playing))
         .with_children(|children| {
             children.dynamic_label_with_marker(
-                "Next weapon cycle in ",
+                "Next weapon in ",
                 format!("{}s", cycle.next_mode_timer.remaining().as_secs()),
                 NextCycleTimerText,
                 font.clone_weak(),
@@ -96,6 +105,7 @@ fn update_cycle(
     cycle.next_mode_timer.tick(time.delta());
     if cycle.next_mode_timer.finished() {
         next_arena_mode.set(cycle.next_mode.clone());
+        cycle.current_mode = cycle.next_mode;
         cycle.next_mode = get_random_different_mode(&cycle.next_mode);
     }
 }

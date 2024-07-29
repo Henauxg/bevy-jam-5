@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::{
     arena::ArenaMode,
-    assets::{HandleMap, SceneKey, ASSETS_SCALE, GLADIATOR_ASSETS_SCALE},
+    assets::{HandleMap, SceneKey, GLADIATOR_ASSETS_SCALE},
     shield::throwers::Thrower,
 };
 
@@ -16,6 +16,7 @@ pub(super) fn plugin(app: &mut App) {
 pub struct SpawnJugThrower {
     pub pos: Vec3,
     pub looking_at: Vec3,
+    pub scope: ArenaMode,
 }
 
 fn spawn_jug_thrower(
@@ -27,7 +28,7 @@ fn spawn_jug_thrower(
     commands
         .spawn((
             Name::new("Jug Thrower"),
-            StateScoped(ArenaMode::Shield),
+            StateScoped(spawn_info.scope),
             SceneBundle {
                 scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
                 transform: Transform::from_translation(spawn_info.pos)
@@ -44,6 +45,7 @@ fn spawn_jug_thrower(
 #[derive(Event, Debug)]
 pub struct ThrowJug {
     pub at: Vec3,
+    pub scope: ArenaMode,
 }
 
 fn throw_jug(
@@ -59,5 +61,6 @@ fn throw_jug(
     commands.trigger(SpawnJug {
         pos: thrower_transform.translation,
         target: throw_info.at,
+        scope: throw_info.scope,
     });
 }

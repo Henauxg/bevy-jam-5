@@ -3,6 +3,7 @@ use std::time::Duration;
 use bevy::{
     app::{App, Update},
     ecs::component::StorageType,
+    log::info,
     math::Vec3,
     prelude::{
         in_state, Commands, Component, Entity, Event, IntoSystemConfigs, Res, ResMut, Resource,
@@ -15,6 +16,7 @@ use rand::Rng;
 
 use crate::game::{
     arena::ArenaMode,
+    cycle::Cycle,
     spawn::{
         arena::DEFAULT_GLADIATOR_POS,
         jug_thrower::{SpawnJugThrower, ThrowJug},
@@ -70,11 +72,13 @@ impl Default for ThrowersData {
 #[derive(Event, Debug)]
 pub struct SpawnJugThrowers;
 
-fn spawn_throwers(_trigger: Trigger<SpawnJugThrowers>, mut commands: Commands) {
+fn spawn_throwers(_trigger: Trigger<SpawnJugThrowers>, cycle: Res<Cycle>, mut commands: Commands) {
     for pos in JUG_THROWERS_POSITIONS.iter() {
+        info!("SpawnJugThrowers with scope: {:?}", cycle.current_mode);
         commands.trigger(SpawnJugThrower {
             pos: *pos,
             looking_at: DEFAULT_GLADIATOR_POS,
+            scope: cycle.current_mode,
         });
     }
 }
@@ -106,7 +110,12 @@ impl Component for Thrower {
     }
 }
 
-fn throw_jugs(mut commands: Commands, time: Res<Time>, mut jug_throwers: ResMut<ThrowersData>) {
+fn throw_jugs(
+    mut commands: Commands,
+    time: Res<Time>,
+    cycle: Res<Cycle>,
+    mut jug_throwers: ResMut<ThrowersData>,
+) {
     jug_throwers.next_throw_timer.tick(time.delta());
     if jug_throwers.next_throw_timer.finished() {
         let mut rng = rand::thread_rng();
@@ -115,6 +124,7 @@ fn throw_jugs(mut commands: Commands, time: Res<Time>, mut jug_throwers: ResMut<
         commands.trigger_targets(
             ThrowJug {
                 at: DEFAULT_GLADIATOR_POS,
+                scope: cycle.current_mode,
             },
             jug_throwers.throwers[index],
         );

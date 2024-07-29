@@ -12,19 +12,21 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Event, Debug)]
-pub struct SpawnSword;
+pub struct SpawnSword {
+    pub scope: ArenaMode,
+}
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 pub struct Sword;
 
 fn spawn_sword(
-    _trigger: Trigger<SpawnSword>,
+    trigger: Trigger<SpawnSword>,
     mut commands: Commands,
     scenes_handles: Res<HandleMap<SceneKey>>,
 ) {
     commands.spawn((
         Name::new("Sword"),
-        StateScoped(ArenaMode::Sword),
+        StateScoped(trigger.event().scope),
         SceneBundle {
             scene: scenes_handles[&SceneKey::Sword].clone_weak(),
             transform: Transform::IDENTITY,

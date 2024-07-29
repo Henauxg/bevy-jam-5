@@ -25,7 +25,9 @@ pub(super) fn plugin(app: &mut App) {
 
 pub fn on_enter_sword_mode(mut commands: Commands) {
     commands.insert_resource(DummiesModeData::default());
-    commands.trigger(SpawnSword);
+    commands.trigger(SpawnSword {
+        scope: ArenaMode::Sword,
+    });
     commands.trigger(SpawnDummySlots);
     commands.trigger(SetSwordModeCamera);
 }
