@@ -1,7 +1,10 @@
+use std::time::Duration;
+
 use bevy::{gltf::GltfMesh, prelude::*};
 use bevy_rapier3d::prelude::{
     ActiveCollisionTypes, Collider, ColliderMassProperties, Friction, Restitution, RigidBody,
 };
+use bevy_tweening::{lens::TransformPositionLens, Animator, EaseFunction, Tween};
 
 use crate::{
     game::{
@@ -12,6 +15,9 @@ use crate::{
 };
 
 use super::arena::DEFAULT_GLADIATOR_POS;
+
+pub const DUMMY_FALL_ANIMATION_DURATION_MS: u64 = 750;
+pub const DUMMY_FALL_START_UP_DELTA: f32 = 15.;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_dummy);
@@ -54,18 +60,32 @@ fn spawn_dummy(
     let mat_handle = &gltf.materials[0];
 
     let spawn_info = trigger.event();
+
+    let fall_animation = Tween::new(
+        EaseFunction::ExponentialIn,
+        Duration::from_millis(DUMMY_FALL_ANIMATION_DURATION_MS),
+        TransformPositionLens {
+            start: spawn_info.pos + DUMMY_FALL_START_UP_DELTA * Vec3::Y,
+            end: spawn_info.pos,
+        },
+    );
+
     commands.spawn((
         Name::new("Dummy"),
         StateScoped(Screen::Playing),
         PbrBundle {
-            // scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
             mesh: mesh_handle.clone(),
             // TODO Material
             // material: materials.add(Color::srgb_u8(50, 50, 50)),
             material: mat_handle.clone(),
-            transform: Transform::from_translation(spawn_info.pos)
-                .looking_at(DEFAULT_GLADIATOR_POS, Vec3::Y)
-                .with_scale(Vec3::splat(ASSETS_SCALE)),
+            transform: Transform::from_translation(
+                spawn_info.pos + DUMMY_FALL_START_UP_DELTA * Vec3::Y,
+            )
+            .looking_at(
+                DEFAULT_GLADIATOR_POS + DUMMY_FALL_START_UP_DELTA * Vec3::Y,
+                Vec3::Y,
+            )
+            .with_scale(Vec3::splat(ASSETS_SCALE)),
             ..default()
         },
         // Physic
@@ -78,6 +98,9 @@ fn spawn_dummy(
         // Logic
         Sliceable,
         Dummy(spawn_info.slot_index),
+        // Animation
+        Animator::new(fall_animation),
     ));
+
     // }
 }
