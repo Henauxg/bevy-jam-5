@@ -20,10 +20,10 @@ pub fn setup_camera(
     let Ok((mut cam_state, mut cam_settings)) = camera_query.get_single_mut() else {
         return;
     };
-    cam_state.center = Vec3::new(-0.025521949, 1.8516482, 0.85786694);
-    cam_state.radius = 10.537145;
-    cam_state.pitch = -0.2600596;
-    cam_state.yaw = -3.131129;
+    cam_state.center = Vec3::new(-0.18647689, 4.443227, 1.4876647);
+    cam_state.radius = 19.983498;
+    cam_state.pitch = -0.3036932;
+    cam_state.yaw = 3.1415827;
     cam_state.needs_transform_refresh = true;
 
     cam_settings.auto_orbit = false;
