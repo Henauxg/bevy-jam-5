@@ -136,7 +136,7 @@ fn detect_slices(
     };
 
     if mouse.pressed(MouseButton::Left) {
-        raycast.debug_cast_ray(cursor_ray, &default(), &mut gizmos);
+        // raycast.debug_cast_ray(cursor_ray, &default(), &mut gizmos);
         let hits = raycast.cast_ray(cursor_ray, &default());
         match *slicer_state {
             SlicerState::Idle => {
@@ -146,7 +146,7 @@ fn detect_slices(
                     let hit = &hits[0];
                     let sliceable = sliceables_query.get(hit.0);
                     if sliceable.is_ok() {
-                        *slicer_state = SlicerState::FirstHit(hits[0].1.position(), hits[0].0);
+                        *slicer_state = SlicerState::FirstHit(hit.1.position(), hit.0);
                     }
                 }
             }
@@ -155,7 +155,7 @@ fn detect_slices(
                     let hit = &hits[0];
                     let sliceable = sliceables_query.get(hit.0);
                     if sliceable.is_ok() {
-                        *slicer_state = SlicerState::FirstHit(hits[0].1.position(), hits[0].0);
+                        *slicer_state = SlicerState::FirstHit(hit.1.position(), hit.0);
                     }
                 }
             }
@@ -167,7 +167,7 @@ fn detect_slices(
                     if hit.0 == entity && hit.1.position() != pos {
                         *slicer_state = SlicerState::Slicing {
                             start: (pos, entity),
-                            last_hit: hits[0].1.position(),
+                            last_hit: hit.1.position(),
                         };
                     } else if hit.0 != entity {
                         let sliceable = sliceables_query.get(hit.0);
