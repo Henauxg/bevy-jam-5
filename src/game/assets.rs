@@ -5,6 +5,7 @@ use super::spawn::{dummy::DummyCachedData, jug::JugCachedData, shield::ShieldCac
 
 pub const ASSETS_SCALE: f32 = 1.;
 pub const ARENA_SCALE: f32 = 0.75;
+pub const GLADIATOR_ASSETS_SCALE: f32 = 0.0275;
 
 pub const DEFAULT_FONT_KEY: FontKey = FontKey::Augustus;
 

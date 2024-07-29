@@ -4,14 +4,14 @@ use bevy_rapier3d::prelude::{
 };
 
 use crate::{
-    game::assets::{HandleMap, SceneKey, ASSETS_SCALE},
+    game::assets::{HandleMap, SceneKey, ASSETS_SCALE, GLADIATOR_ASSETS_SCALE},
     screen::Screen,
 };
 
 use super::helmet::SpawnHelmet;
 
-pub const GLADIATOR_HEIGHT: f32 = 3.;
-pub const GLADIATOR_HALF_WIDTH: f32 = 0.7;
+pub const GLADIATOR_HEIGHT: f32 = 3. * (1. / GLADIATOR_ASSETS_SCALE);
+pub const GLADIATOR_HALF_WIDTH: f32 = 0.7 * (1. / GLADIATOR_ASSETS_SCALE);
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_player);
@@ -43,7 +43,7 @@ fn spawn_player(
             scene: scenes_handles[&SceneKey::Gladiator].clone_weak(),
             transform: Transform::from_translation(spawn_info.pos)
                 .looking_at(spawn_info.looking_at, Vec3::Y)
-                .with_scale(Vec3::splat(ASSETS_SCALE)),
+                .with_scale(Vec3::splat(GLADIATOR_ASSETS_SCALE)),
             ..default()
         },
         // Physic
