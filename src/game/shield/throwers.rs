@@ -74,7 +74,6 @@ pub struct SpawnJugThrowers;
 
 fn spawn_throwers(_trigger: Trigger<SpawnJugThrowers>, cycle: Res<Cycle>, mut commands: Commands) {
     for pos in JUG_THROWERS_POSITIONS.iter() {
-        info!("SpawnJugThrowers with scope: {:?}", cycle.current_mode);
         commands.trigger(SpawnJugThrower {
             pos: *pos,
             looking_at: DEFAULT_GLADIATOR_POS,
