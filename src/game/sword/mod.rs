@@ -3,7 +3,7 @@ use bevy::{
     prelude::{Commands, OnEnter, OnExit},
 };
 use camera::SetSwordModeCamera;
-use dummies::{DummiesData, SpawnDummySlots};
+use dummies::{DummiesModeData, SpawnDummySlots};
 
 use super::{arena::ArenaMode, spawn::sword::SpawnSword};
 
@@ -24,12 +24,12 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub fn on_enter_sword_mode(mut commands: Commands) {
-    commands.insert_resource(DummiesData::default());
+    commands.insert_resource(DummiesModeData::default());
     commands.trigger(SpawnSword);
     commands.trigger(SpawnDummySlots);
     commands.trigger(SetSwordModeCamera);
 }
 
 pub fn on_exit_sword_mode(mut commands: Commands) {
-    commands.remove_resource::<DummiesData>();
+    commands.remove_resource::<DummiesModeData>();
 }
