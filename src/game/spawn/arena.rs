@@ -3,7 +3,7 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    color::palettes::css::{ORANGE_RED, SANDY_BROWN},
+    color::palettes::css::{ORANGE_RED, SANDY_BROWN, WHITE},
     prelude::*,
 };
 use bevy_rapier3d::prelude::{ActiveCollisionTypes, Collider, Friction, Restitution};
@@ -31,37 +31,43 @@ fn spawn_arena(
 ) {
     // Scene lights
     commands.insert_resource(AmbientLight {
-        color: Color::Srgba(ORANGE_RED),
-        brightness: 0.05,
+        color: Color::Srgba(WHITE),
+        brightness: 45.,
     });
-    commands.spawn((DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            shadows_enabled: true,
-            illuminance: 4000.,
-            color: Color::srgb(1.0, 0.85, 0.65),
+    commands.spawn((
+        Name::new("DirectionalLight"),
+        DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                shadows_enabled: true,
+                illuminance: 6000.,
+                color: Color::srgb(1.0, 0.85, 0.65),
+                // color: bevy::prelude::Color::Srgba(ORANGE_RED),
+                ..default()
+            },
+            transform: Transform {
+                translation: Vec3::new(5.0, 10.0, 2.0),
+                // rotation: Quat::from_euler(EulerRot::ZYX, 0., -2. * PI / 3., -2. * PI / 3.),
+                rotation: Quat::from_euler(EulerRot::ZYX, 0., -3. * PI / 3., -1. * PI / 3.),
+                ..default()
+            },
             ..default()
         },
-        transform: Transform {
-            translation: Vec3::new(5.0, 10.0, 2.0),
-            rotation: Quat::from_euler(EulerRot::ZYX, 0., -PI / 5., -PI / 3.),
-            ..default()
-        },
-        ..default()
-    },));
-    commands.spawn((DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            shadows_enabled: false,
-            illuminance: 2000.,
-            color: Color::Srgba(ORANGE_RED),
-            ..default()
-        },
-        transform: Transform {
-            translation: Vec3::new(5.0, 10.0, 2.0),
-            rotation: Quat::from_euler(EulerRot::ZYX, 0., PI * 4. / 5., -PI / 3.),
-            ..default()
-        },
-        ..default()
-    },));
+    ));
+    // Only 1 dir light allowed for wasm builds
+    // commands.spawn((DirectionalLightBundle {
+    //     directional_light: DirectionalLight {
+    //         shadows_enabled: false,
+    //         illuminance: 2000.,
+    //         color: Color::Srgba(ORANGE_RED),
+    //         ..default()
+    //     },
+    //     transform: Transform {
+    //         translation: Vec3::new(5.0, 10.0, 2.0),
+    //         rotation: Quat::from_euler(EulerRot::ZYX, 0., PI * 4. / 5., -PI / 3.),
+    //         ..default()
+    //     },
+    //     ..default()
+    // },));
 
     // Prototype ground
     let radius = 1500.;
