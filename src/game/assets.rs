@@ -69,7 +69,7 @@ impl FromWorld for HandleMap<ImageKey> {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum FontKey {
     Augustus,
-    RomanSD,
+    // RomanSD,
 }
 
 impl AssetKey for FontKey {
@@ -81,7 +81,7 @@ impl FromWorld for HandleMap<FontKey> {
         let asset_server = world.resource::<AssetServer>();
         [
             (FontKey::Augustus, asset_server.load("fonts/augustus.ttf")),
-            (FontKey::RomanSD, asset_server.load("fonts/RomanSD.ttf")),
+            // (FontKey::RomanSD, asset_server.load("fonts/RomanSD.ttf")),
         ]
         .into()
     }
@@ -89,12 +89,12 @@ impl FromWorld for HandleMap<FontKey> {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum SfxKey {
-    ButtonHover,
-    ButtonPress,
-    Step1,
-    Step2,
-    Step3,
-    Step4,
+    // ButtonHover,
+    // ButtonPress,
+    // Step1,
+    // Step2,
+    // Step3,
+    // Step4,
 }
 
 impl AssetKey for SfxKey {
@@ -105,18 +105,18 @@ impl FromWorld for HandleMap<SfxKey> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         [
-            (
-                SfxKey::ButtonHover,
-                asset_server.load("audio/sfx/button_hover.ogg"),
-            ),
-            (
-                SfxKey::ButtonPress,
-                asset_server.load("audio/sfx/button_press.ogg"),
-            ),
-            (SfxKey::Step1, asset_server.load("audio/sfx/step1.ogg")),
-            (SfxKey::Step2, asset_server.load("audio/sfx/step2.ogg")),
-            (SfxKey::Step3, asset_server.load("audio/sfx/step3.ogg")),
-            (SfxKey::Step4, asset_server.load("audio/sfx/step4.ogg")),
+            // (
+            //     SfxKey::ButtonHover,
+            //     asset_server.load("audio/sfx/button_hover.ogg"),
+            // ),
+            // (
+            //     SfxKey::ButtonPress,
+            //     asset_server.load("audio/sfx/button_press.ogg"),
+            // ),
+            // (SfxKey::Step1, asset_server.load("audio/sfx/step1.ogg")),
+            // (SfxKey::Step2, asset_server.load("audio/sfx/step2.ogg")),
+            // (SfxKey::Step3, asset_server.load("audio/sfx/step3.ogg")),
+            // (SfxKey::Step4, asset_server.load("audio/sfx/step4.ogg")),
         ]
         .into()
     }
@@ -124,9 +124,9 @@ impl FromWorld for HandleMap<SfxKey> {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum SoundtrackKey {
-    Credits,
-    Gameplay,
-    Excavation,
+    // Credits,
+    // Gameplay,
+    // Excavation,
 }
 
 impl AssetKey for SoundtrackKey {
@@ -137,18 +137,18 @@ impl FromWorld for HandleMap<SoundtrackKey> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         [
-            (
-                SoundtrackKey::Credits,
-                asset_server.load("audio/soundtracks/Monkeys Spinning Monkeys.ogg"),
-            ),
-            (
-                SoundtrackKey::Gameplay,
-                asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
-            ),
-            (
-                SoundtrackKey::Excavation,
-                asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
-            ),
+            // (
+            //     SoundtrackKey::Credits,
+            //     asset_server.load("audio/soundtracks/Monkeys Spinning Monkeys.ogg"),
+            // ),
+            // (
+            //     SoundtrackKey::Gameplay,
+            //     asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
+            // ),
+            // (
+            //     SoundtrackKey::Excavation,
+            //     asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
+            // ),
         ]
         .into()
     }
@@ -257,10 +257,10 @@ pub enum GltfKey {
     Dummy,
     Shield,
     Jug1,
-    Jug2,
-    Jug3,
-    Jug4,
-    Jug5,
+    // Jug2,
+    // Jug3,
+    // Jug4,
+    // Jug5,
 }
 
 impl AssetKey for GltfKey {
@@ -279,10 +279,10 @@ impl FromWorld for HandleMap<GltfKey> {
             (GltfKey::Shield, asset_server.load("models/shield.glb")),
             (GltfKey::Dummy, asset_server.load("models/dummy.glb")),
             (GltfKey::Jug1, asset_server.load("models/jug1.glb")),
-            (GltfKey::Jug2, asset_server.load("models/jug2.glb")),
-            (GltfKey::Jug3, asset_server.load("models/jug3.glb")),
-            (GltfKey::Jug4, asset_server.load("models/jug4.glb")),
-            (GltfKey::Jug5, asset_server.load("models/jug5.glb")),
+            // (GltfKey::Jug2, asset_server.load("models/jug2.glb")),
+            // (GltfKey::Jug3, asset_server.load("models/jug3.glb")),
+            // (GltfKey::Jug4, asset_server.load("models/jug4.glb")),
+            // (GltfKey::Jug5, asset_server.load("models/jug5.glb")),
         ]
         .into()
     }

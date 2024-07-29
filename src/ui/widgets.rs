@@ -210,7 +210,7 @@ impl Containers for Commands<'_, '_> {
             NodeBundle {
                 style: Style {
                     width: Percent(100.0),
-                    height: Percent(95.0),
+                    height: Percent(98.0),
                     justify_content: JustifyContent::End,
                     align_items: AlignItems::Center,
                     flex_direction: FlexDirection::Column,
@@ -228,12 +228,16 @@ impl Containers for Commands<'_, '_> {
             Name::new("Bottom left UI Root"),
             NodeBundle {
                 style: Style {
-                    width: Percent(100.0),
-                    height: Percent(95.0),
-                    justify_content: JustifyContent::End,
-                    align_items: AlignItems::Start,
-                    flex_direction: FlexDirection::Column,
-                    row_gap: Px(10.0),
+                    width: Percent(35.0),
+                    height: Percent(20.0),
+                    bottom: Val::Percent(2.),
+                    left: Val::Percent(2.),
+                    align_content: bevy::ui::AlignContent::Center,
+                    justify_content: bevy::ui::JustifyContent::Center,
+                    // justify_content: JustifyContent::Start,
+                    // align_items: AlignItems::End,
+                    // flex_direction: FlexDirection::Row,
+                    // row_gap: Px(10.0),
                     position_type: PositionType::Absolute,
                     ..default()
                 },
@@ -247,7 +251,7 @@ impl Containers for Commands<'_, '_> {
             Name::new("Top UI Root"),
             NodeBundle {
                 style: Style {
-                    top: Val::Percent(5.),
+                    top: Val::Percent(2.),
                     width: Percent(100.0),
                     height: Percent(95.0),
                     justify_content: JustifyContent::Start,

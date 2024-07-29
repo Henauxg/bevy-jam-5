@@ -7,6 +7,8 @@ use rand::{distributions::Standard, prelude::Distribution, Rng};
 
 use crate::screen::Screen;
 
+use super::assets::ImageKey;
+
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<ArenaMode>();
     app.add_sub_state::<ArenaMode>();
@@ -20,6 +22,17 @@ pub enum ArenaMode {
     Sword,
     Shield,
     GameOver,
+}
+impl ArenaMode {
+    pub fn to_image_key(&self) -> ImageKey {
+        match self {
+            ArenaMode::Sword => ImageKey::Sword,
+            ArenaMode::Shield => ImageKey::Shield,
+            // TODO
+            ArenaMode::None => ImageKey::Sword,
+            ArenaMode::GameOver => ImageKey::Sword,
+        }
+    }
 }
 
 impl Distribution<ArenaMode> for Standard {

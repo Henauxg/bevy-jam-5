@@ -7,19 +7,20 @@ use crate::{
 use bevy::{
     app::{App, Update},
     prelude::{
-        in_state, BuildChildren, Commands, Component, IntoSystemConfigs, NextState, OnEnter, Query,
-        Res, ResMut, Resource, StateScoped, With,
+        in_state, BuildChildren, Commands, Component, ImageBundle, IntoSystemConfigs, NextState,
+        OnEnter, Query, Res, ResMut, Resource, StateScoped, With,
     },
     reflect::Reflect,
     text::Text,
     time::{Time, Timer, TimerMode},
+    ui::{Style, UiImage, Val},
 };
 
 use crate::screen::Screen;
 
 use super::{
     arena::ArenaMode,
-    assets::{FontKey, HandleMap, DEFAULT_FONT_KEY},
+    assets::{FontKey, HandleMap, ImageKey, DEFAULT_FONT_KEY},
 };
 
 pub const NEXT_WEAPON_CYCLE_INTERVAL: u64 = 13000;
@@ -77,15 +78,38 @@ fn get_random_different_mode(mode: &ArenaMode) -> ArenaMode {
 #[derive(Component)]
 pub struct NextCycleTimerText;
 
+#[derive(Component)]
+pub struct NextCycleImage;
+
 fn setup_cycle_ui(
     mut commands: Commands,
     cycle: Res<Cycle>,
     font_handles: Res<HandleMap<FontKey>>,
+    image_handles: Res<HandleMap<ImageKey>>,
 ) {
     let font = font_handles.get(&DEFAULT_FONT_KEY).unwrap().clone();
+    let image = image_handles.get(&ImageKey::Sword).unwrap().clone_weak();
     commands
         .bottom_left_ui_root()
         .insert(StateScoped(Screen::Playing))
+        .with_children(|parent| {
+            parent.spawn((
+                ImageBundle {
+                    image: UiImage::new(image),
+                    style: Style {
+                        max_width: Val::Px(90.),
+                        max_height: Val::Px(90.),
+                        // min_width: Val::Px(90.),
+                        // min_height: Val::Px(90.),
+                        align_content: bevy::ui::AlignContent::Center,
+                        justify_content: bevy::ui::JustifyContent::Center,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                NextCycleImage,
+            ));
+        })
         .with_children(|children| {
             children.dynamic_label_with_marker(
                 "Next weapon in ",
@@ -113,9 +137,19 @@ fn update_cycle(
 fn update_cycle_ui(
     cycle: Res<Cycle>,
     mut next_cycle_timer_text: Query<&mut Text, With<NextCycleTimerText>>,
+    mut next_cycle_image: Query<&mut UiImage, With<NextCycleImage>>,
+    image_handles: Res<HandleMap<ImageKey>>,
 ) {
     let Ok(mut timer_text) = next_cycle_timer_text.get_single_mut() else {
         return;
     };
+    let Ok(mut cycle_image) = next_cycle_image.get_single_mut() else {
+        return;
+    };
     timer_text.sections[1].value = format!("{}s", cycle.next_mode_timer.remaining().as_secs());
+
+    let Some(image_handle) = image_handles.get(&cycle.next_mode.to_image_key()) else {
+        return;
+    };
+    cycle_image.texture = image_handle.clone_weak();
 }
