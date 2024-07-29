@@ -1,6 +1,6 @@
 use bevy::app::App;
 
-pub(super) fn plugin(app: &mut App) {
+pub(super) fn plugin(_app: &mut App) {
     // app.observe(play_sfx);
 }
 

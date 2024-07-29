@@ -103,7 +103,7 @@ impl AssetKey for SfxKey {
 
 impl FromWorld for HandleMap<SfxKey> {
     fn from_world(world: &mut World) -> Self {
-        let asset_server = world.resource::<AssetServer>();
+        let _asset_server = world.resource::<AssetServer>();
         [
             // (
             //     SfxKey::ButtonHover,
@@ -135,7 +135,7 @@ impl AssetKey for SoundtrackKey {
 
 impl FromWorld for HandleMap<SoundtrackKey> {
     fn from_world(world: &mut World) -> Self {
-        let asset_server = world.resource::<AssetServer>();
+        let _asset_server = world.resource::<AssetServer>();
         [
             // (
             //     SoundtrackKey::Credits,
