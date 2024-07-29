@@ -10,6 +10,7 @@ use crate::{
     game::{
         arena::ArenaMode,
         assets::{GltfKey, HandleMap, ASSETS_SCALE},
+        score::Difficulty,
         sword::slicing::Sliceable,
     },
     screen::Screen,
@@ -17,8 +18,8 @@ use crate::{
 
 use super::arena::DEFAULT_GLADIATOR_POS;
 
-// TODO Consider decreasing with difficulty
-pub const DEFAULT_DUMMY_DESPAWN_TIMER_MS: u64 = 3000;
+pub const INITIAL_DUMMY_DESPAWN_TIMER_MS: u64 = 2200;
+pub const FINAL_DUMMY_DESPAWN_TIMER_MS: u64 = 1700;
 
 pub const DUMMY_FALL_ANIMATION_DURATION_MS: u64 = 1000;
 pub const DUMMY_FALL_START_UP_DELTA: f32 = 25.;
@@ -127,11 +128,14 @@ struct AttachDummyLogic {
 fn attach_dummy_logic(
     mut commands: Commands,
     time: Res<Time>,
+    difficulty: Res<Difficulty>,
     mut spawning_dummies_query: Query<(Entity, &mut AttachDummyLogic)>,
 ) {
     for (entity, mut spawning_dummy) in spawning_dummies_query.iter_mut() {
         spawning_dummy.timer.tick(time.delta());
         if spawning_dummy.timer.finished() {
+            let despawn_delay = INITIAL_DUMMY_DESPAWN_TIMER_MS
+                - (difficulty.difficulty_factor_0_1() * FINAL_DUMMY_DESPAWN_TIMER_MS as f32) as u64;
             commands
                 .entity(entity)
                 .remove::<AttachDummyLogic>()
@@ -140,7 +144,7 @@ fn attach_dummy_logic(
                     Dummy {
                         slot_index: spawning_dummy.slot_index,
                         despawn_timer: Timer::new(
-                            Duration::from_millis(DEFAULT_DUMMY_DESPAWN_TIMER_MS),
+                            Duration::from_millis(despawn_delay),
                             TimerMode::Once,
                         ),
                     },

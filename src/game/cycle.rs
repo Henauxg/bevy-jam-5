@@ -21,9 +21,11 @@ use crate::screen::Screen;
 use super::{
     arena::ArenaMode,
     assets::{FontKey, HandleMap, ImageKey, DEFAULT_FONT_KEY},
+    score::Difficulty,
 };
 
-pub const NEXT_WEAPON_CYCLE_INTERVAL: u64 = 13000;
+pub const NEXT_WEAPON_CYCLE_INTERVAL_MAX: u64 = 15000;
+pub const NEXT_WEAPON_CYCLE_INTERVAL_DELTA: u64 = 10000;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -61,7 +63,7 @@ fn setup_cycle(mut commands: Commands, mut next_arena_mode: ResMut<NextState<Are
         current_mode: random_arena_mode,
         next_mode,
         next_mode_timer: Timer::new(
-            Duration::from_millis(NEXT_WEAPON_CYCLE_INTERVAL),
+            Duration::from_millis(NEXT_WEAPON_CYCLE_INTERVAL_MAX),
             TimerMode::Repeating,
         ),
     });
@@ -124,10 +126,16 @@ fn update_cycle(
     // mut commands: Commands,
     time: Res<Time>,
     mut cycle: ResMut<Cycle>,
+    difficulty: Res<Difficulty>,
     mut next_arena_mode: ResMut<NextState<ArenaMode>>,
 ) {
     cycle.next_mode_timer.tick(time.delta());
     if cycle.next_mode_timer.finished() {
+        cycle.next_mode_timer.set_duration(Duration::from_millis(
+            NEXT_WEAPON_CYCLE_INTERVAL_MAX
+                - (difficulty.difficulty_factor_0_1() * NEXT_WEAPON_CYCLE_INTERVAL_DELTA as f32)
+                    as u64,
+        ));
         next_arena_mode.set(cycle.next_mode.clone());
         cycle.current_mode = cycle.next_mode;
         cycle.next_mode = get_random_different_mode(&cycle.next_mode);
@@ -146,7 +154,13 @@ fn update_cycle_ui(
     let Ok(mut cycle_image) = next_cycle_image.get_single_mut() else {
         return;
     };
-    timer_text.sections[1].value = format!("{}s", cycle.next_mode_timer.remaining().as_secs());
+
+    if cycle.current_mode == ArenaMode::GameOver {
+        timer_text.sections[0].value = "".to_string();
+        timer_text.sections[1].value = "Press Escape to start again".to_string();
+    } else {
+        timer_text.sections[1].value = format!("{}s", cycle.next_mode_timer.remaining().as_secs());
+    }
 
     let Some(image_handle) = image_handles.get(&cycle.next_mode.to_image_key()) else {
         return;

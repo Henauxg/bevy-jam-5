@@ -11,8 +11,8 @@ use bevy::{
     math::Vec3,
     prelude::{
         in_state, BuildChildren, Camera, Commands, Component, DespawnRecursiveExt, Entity, Event,
-        IntoSystemConfigs, OnEnter, ParamSet, Query, Res, ResMut, Resource, StateScoped, Transform,
-        Trigger, With,
+        IntoSystemConfigs, NextState, OnEnter, ParamSet, Query, Res, ResMut, Resource, StateScoped,
+        Transform, Trigger, With,
     },
     reflect::Reflect,
     text::{Text, TextSection, TextStyle},
@@ -25,11 +25,12 @@ use bevy_tweening::{
 };
 
 use super::{
+    arena::ArenaMode,
     assets::{FontKey, HandleMap, DEFAULT_FONT_KEY},
     cycle::Cycle,
 };
 
-pub const DEFAULT_BAD_ACTION_SCORE: f32 = -5.;
+pub const DEFAULT_BAD_ACTION_SCORE: f32 = -10.;
 pub const DEFAULT_GOOD_ACTION_SCORE: f32 = 10.;
 pub const DEFAULT_PERFECT_ACTION_SCORE: f32 = 15.;
 
@@ -56,6 +57,18 @@ pub struct Score {
 pub struct Difficulty {
     time_elapsed_s: f32,
 }
+impl Difficulty {
+    /// From INITIAL_DIFFICULTY_FACTOR to MAX_DIFFICULTY_FACTOR, increasing by DIFFICULTY_FACTOR_PER_SEC
+    pub fn difficulty_factor(&self) -> f32 {
+        MAX_DIFFICULTY_FACTOR
+            .min(INITIAL_DIFFICULTY_FACTOR + self.time_elapsed_s as f32 * DIFFICULTY_FACTOR_PER_SEC)
+    }
+
+    /// difficulty_factor but from 0 to 1
+    pub fn difficulty_factor_0_1(&self) -> f32 {
+        self.difficulty_factor() - 1.
+    }
+}
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Score>();
@@ -73,6 +86,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.observe(handle_score_actions);
     app.observe(update_score_ui);
+    app.observe(detect_game_over);
 }
 
 #[derive(Reflect, PartialEq, Eq, Clone)]
@@ -125,9 +139,7 @@ pub fn handle_score_actions(
     let score_action = trigger.event();
     let (score_action_raw_value, billboard_text_color, action_text) =
         score_action.action.to_properties();
-    let difficulty_factor = MAX_DIFFICULTY_FACTOR.min(
-        INITIAL_DIFFICULTY_FACTOR + difficulty.time_elapsed_s as f32 * DIFFICULTY_FACTOR_PER_SEC,
-    );
+    let difficulty_factor = difficulty.difficulty_factor();
     let (rounded_action_value, action_text) = if score_action_raw_value > 0. {
         let value = (score_action_raw_value / difficulty_factor) as i32;
         (value, format!("{} (+{})", action_text, value))
@@ -265,14 +277,32 @@ pub fn setup_score_ui(mut commands: Commands, font_handles: Res<HandleMap<FontKe
         });
 }
 
+pub fn detect_game_over(
+    _trigger: Trigger<ScoreUpdate>,
+    score: Res<Score>,
+    mut cycle: ResMut<Cycle>,
+    mut next_mode: ResMut<NextState<ArenaMode>>,
+) {
+    if score.current < 0 {
+        next_mode.set(ArenaMode::GameOver);
+        cycle.current_mode = ArenaMode::GameOver;
+        cycle.next_mode_timer.pause();
+    }
+}
+
 pub fn update_score_ui(
     _trigger: Trigger<ScoreUpdate>,
     score: Res<Score>,
+    cycle: Res<Cycle>,
     mut ui_queries: ParamSet<(
         Query<&mut Text, With<ScoreText>>,
         Query<&mut Text, With<HighscoreText>>,
     )>,
 ) {
+    // Quick & dirty
+    if cycle.current_mode == ArenaMode::GameOver {
+        return;
+    }
     {
         let mut score_query = ui_queries.p0();
         let Ok(mut score_text) = score_query.get_single_mut() else {
@@ -291,9 +321,15 @@ pub fn update_score_ui(
 
 pub fn update_difficulty(
     time: Res<Time>,
+    cycle: Res<Cycle>,
     mut difficulty: ResMut<Difficulty>,
     mut timer_text_query: Query<&mut Text, With<DifficultyTimerText>>,
 ) {
+    // Quick & dirty
+    if cycle.current_mode == ArenaMode::GameOver {
+        return;
+    }
+
     difficulty.time_elapsed_s += time.delta_seconds();
 
     let Ok(mut timer_text) = timer_text_query.get_single_mut() else {

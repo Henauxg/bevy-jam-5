@@ -34,7 +34,8 @@ pub const DUMMY_POSITIONS: [Vec3; 6] = [
     Vec3::new(-4., 0., 1.),
 ];
 
-pub const DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS: u64 = 3000;
+pub const INITIAL_DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS: u64 = 2200;
+
 // pub const DUMMIES_SPAWN_TIMER_MS: u64 = 1200;
 pub const DUMMIES_SPAWN_INTERVAL_MIN_MS: u64 = 550;
 pub const DUMMIES_SPAWN_INTERVAL_MAX_MS: u64 = 1450;
@@ -129,7 +130,7 @@ fn queue_dummy_slot_free(
         dummies.killed_dummies_queue.push((
             dummy.slot_index,
             Timer::new(
-                Duration::from_millis(DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS),
+                Duration::from_millis(INITIAL_DUMMY_SLOT_FREE_AFTER_SLICE_DURATION_MS),
                 TimerMode::Once,
             ),
         ));

@@ -3,7 +3,6 @@ use std::time::Duration;
 use bevy::{
     app::{App, Update},
     ecs::component::StorageType,
-    log::info,
     math::Vec3,
     prelude::{
         in_state, Commands, Component, Entity, Event, IntoSystemConfigs, Res, ResMut, Resource,
@@ -17,6 +16,7 @@ use rand::Rng;
 use crate::game::{
     arena::ArenaMode,
     cycle::Cycle,
+    score::Difficulty,
     spawn::{
         arena::DEFAULT_GLADIATOR_POS,
         jug_thrower::{SpawnJugThrower, ThrowJug},
@@ -52,8 +52,11 @@ pub struct ThrowersData {
     min_throw_interval_ms: u64,
     max_throw_interval_ms: u64,
 }
-pub const INITIAL_MIN_THROW_INTERVAL_MS: u64 = 500;
-pub const INITIAL_MAX_THROW_INTERVAL_MS: u64 = 1500;
+pub const INITIAL_MIN_THROW_INTERVAL_MS: u64 = 750;
+pub const INITIAL_MAX_THROW_INTERVAL_MS: u64 = 1800;
+
+pub const FINAL_MIN_THROW_INTERVAL_DELTA_MS: u64 = 450;
+pub const FINAL_MAX_THROW_INTERVAL_DELTA_MS: u64 = 1300;
 
 impl Default for ThrowersData {
     fn default() -> Self {
@@ -113,6 +116,7 @@ fn throw_jugs(
     mut commands: Commands,
     time: Res<Time>,
     cycle: Res<Cycle>,
+    difficulty: Res<Difficulty>,
     mut jug_throwers: ResMut<ThrowersData>,
 ) {
     jug_throwers.next_throw_timer.tick(time.delta());
@@ -129,6 +133,13 @@ fn throw_jugs(
         );
 
         // Prepare next throw
+        jug_throwers.min_throw_interval_ms = INITIAL_MIN_THROW_INTERVAL_MS
+            - (difficulty.difficulty_factor_0_1() * FINAL_MIN_THROW_INTERVAL_DELTA_MS as f32)
+                as u64;
+        jug_throwers.min_throw_interval_ms = INITIAL_MAX_THROW_INTERVAL_MS
+            - (difficulty.difficulty_factor_0_1() * FINAL_MAX_THROW_INTERVAL_DELTA_MS as f32)
+                as u64;
+
         jug_throwers.next_throw_timer =
             Timer::new(
                 Duration::from_millis(rng.gen_range(
