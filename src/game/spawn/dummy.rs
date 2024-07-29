@@ -16,12 +16,17 @@ use crate::{
 
 use super::arena::DEFAULT_GLADIATOR_POS;
 
-pub const DUMMY_FALL_ANIMATION_DURATION_MS: u64 = 750;
-pub const DUMMY_FALL_START_UP_DELTA: f32 = 15.;
+// TODO Consider decreasing with difficulty
+pub const DEFAULT_DUMMY_DESPAWN_TIMER_MS: u64 = 3000;
+
+pub const DUMMY_FALL_ANIMATION_DURATION_MS: u64 = 1000;
+pub const DUMMY_FALL_START_UP_DELTA: f32 = 25.;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_dummy);
     app.register_type::<Dummy>();
+
+    app.add_systems(Update, attach_dummy_logic.run_if(in_state(Screen::Playing)));
 }
 
 #[derive(Event, Debug)]
@@ -30,9 +35,12 @@ pub struct SpawnDummy {
     pub slot_index: usize,
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[derive(Component, Debug, Clone, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
-pub struct Dummy(pub usize);
+pub struct Dummy {
+    pub slot_index: usize,
+    pub despawn_timer: Timer,
+}
 
 #[derive(Resource)]
 pub struct DummyCachedData {
@@ -96,11 +104,45 @@ fn spawn_dummy(
         Restitution::coefficient(0.05),
         ColliderMassProperties::Density(2.0),
         // Logic
-        Sliceable,
-        Dummy(spawn_info.slot_index),
+        AttachDummyLogic {
+            timer: Timer::new(
+                Duration::from_millis(DUMMY_FALL_ANIMATION_DURATION_MS),
+                TimerMode::Once,
+            ),
+            slot_index: spawn_info.slot_index,
+        },
         // Animation
         Animator::new(fall_animation),
     ));
+}
 
-    // }
+#[derive(Component, Debug, Reflect)]
+struct AttachDummyLogic {
+    timer: Timer,
+    slot_index: usize,
+}
+
+fn attach_dummy_logic(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut spawning_dummies_query: Query<(Entity, &mut AttachDummyLogic)>,
+) {
+    for (entity, mut spawning_dummy) in spawning_dummies_query.iter_mut() {
+        spawning_dummy.timer.tick(time.delta());
+        if spawning_dummy.timer.finished() {
+            commands
+                .entity(entity)
+                .remove::<AttachDummyLogic>()
+                .insert((
+                    Sliceable,
+                    Dummy {
+                        slot_index: spawning_dummy.slot_index,
+                        despawn_timer: Timer::new(
+                            Duration::from_millis(DEFAULT_DUMMY_DESPAWN_TIMER_MS),
+                            TimerMode::Once,
+                        ),
+                    },
+                ));
+        }
+    }
 }
