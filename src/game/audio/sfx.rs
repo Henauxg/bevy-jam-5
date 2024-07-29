@@ -1,3 +1,5 @@
+use bevy::app::App;
+
 pub(super) fn plugin(app: &mut App) {
     // app.observe(play_sfx);
 }
