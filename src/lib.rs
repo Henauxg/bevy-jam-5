@@ -112,6 +112,10 @@ fn spawn_camera(mut commands: Commands) {
                 ..Default::default()
             },
             settings: PanOrbitSettings {
+                pan_key: None,
+                orbit_key: Some(KeyCode::AltLeft),
+                zoom_key: None,
+                scroll_action: None,
                 auto_orbit: false,
                 ..Default::default()
             },
