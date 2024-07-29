@@ -80,7 +80,7 @@ impl FromWorld for HandleMap<FontKey> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         [
-            (FontKey::Augustus, asset_server.load("fonts/augustus.ttf")),
+            (FontKey::Augustus, asset_server.load("fonts/AUGUSTUS.TTF")),
             // (FontKey::RomanSD, asset_server.load("fonts/RomanSD.ttf")),
         ]
         .into()
